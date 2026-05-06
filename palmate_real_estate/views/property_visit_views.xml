@@ -5,7 +5,7 @@
         <field name = "name">palmate.property.visit.tree</field>
         <field name = "model">palmate.property.visit</field>
         <field name = "arch" type = "xml">
-            <tree string = "Property Visits">
+            <list string = "Property Visits">
                 <field name = "name"/>
                 <field name = "property_id"/>
                 <field name = "customer_id"/>
@@ -13,7 +13,7 @@
                 <field name = "visit_date"/>
                 <field name = "status"/>
                 <field name = "company_id"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -99,7 +99,7 @@
     <record id = "action_palmate_property_visit" model = "ir.actions.act_window">
         <field name = "name">Property Visits</field>
         <field name = "res_model">palmate.property.visit</field>
-        <field name = "view_mode">tree,form</field>
+        <field name = "view_mode">list,form</field>
     </record>
 
     <menuitem id = "menu_palmate_property_visit"

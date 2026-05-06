@@ -5,7 +5,7 @@
         <field name = "name">palmate.property.tree</field>
         <field name = "model">palmate.property</field>
         <field name = "arch" type = "xml">
-            <tree string = "Properties">
+            <list string = "Properties">
                 <field name = "name"/>
                 <field name = "property_type"/>
                 <field name = "location"/>
@@ -14,7 +14,7 @@
                 <field name = "status"/>
                 <field name = "price"/>
                 <field name = "company_id"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -65,13 +65,13 @@
                         </page>
                         <page string = "Visits">
                             <field name = "visit_ids">
-                                <tree editable = "bottom">
+                                <list editable = "bottom">
                                     <field name = "name"/>
                                     <field name = "customer_id"/>
                                     <field name = "agent_id"/>
                                     <field name = "visit_date"/>
                                     <field name = "status"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -114,7 +114,7 @@
     <record id = "action_palmate_property" model = "ir.actions.act_window">
         <field name = "name">Properties</field>
         <field name = "res_model">palmate.property</field>
-        <field name = "view_mode">tree,form</field>
+        <field name = "view_mode">list,form</field>
     </record>
 
     <menuitem id = "menu_palmate_real_estate_root"
