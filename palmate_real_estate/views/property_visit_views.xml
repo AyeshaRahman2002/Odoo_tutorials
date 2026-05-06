@@ -147,7 +147,6 @@
         <field name = "arch" type = "xml">
             <graph string = "Visits by Agent" type = "bar">
                 <field name = "agent_id"/>
-                <field name = "__count" type = "measure" string = "Visits"/>
             </graph>
         </field>
     </record>
