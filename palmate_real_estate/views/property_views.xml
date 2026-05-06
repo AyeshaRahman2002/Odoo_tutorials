@@ -73,7 +73,7 @@
             <form string = "Property">
                 <header>
                     <button name = "action_generate_ai_description"
-                            string = "Generate AI Description"
+                            string = "Generate Discription"
                             type = "object"
                             class = "btn-secondary"/>
                     <button name = "action_mark_reserved"
@@ -123,7 +123,7 @@
                     </group>
 
                     <notebook>
-                        <page string = "AI Description">
+                        <page string = "Description">
                             <field name = "ai_description" placeholder = "Use the button above to generate a draft description."/>
                         </page>
                         <page string = "Notes">

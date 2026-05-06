@@ -88,9 +88,9 @@ class PalmateProperty(models.Model):
     )
 
     ai_description = fields.Text(
-        string = "AI Description",
+        string = "Description",
         tracking = True,
-        help = "Rule-based placeholder description. Replace the generator later with a real AI service.",
+        help = "Auto-generated description draft based on the property details.",
     )
 
     title_deed_file = fields.Binary(
