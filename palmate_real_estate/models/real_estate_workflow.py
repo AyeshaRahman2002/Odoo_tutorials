@@ -104,6 +104,14 @@ class PalmatePropertyInquiry(models.Model):
         string = "Visit Count",
         compute = "_compute_visit_count",
     )
+    reservation_count = fields.Integer(
+        string = "Reservation Count",
+        compute = "_compute_flow_counts",
+    )
+    contract_count = fields.Integer(
+        string = "Contract Count",
+        compute = "_compute_flow_counts",
+    )
     priority = fields.Selection(
         [
             ("0", "Low"),
@@ -139,6 +147,11 @@ class PalmatePropertyInquiry(models.Model):
     def _compute_visit_count(self):
         for record in self:
             record.visit_count = len(record.visit_ids)
+
+    def _compute_flow_counts(self):
+        for record in self:
+            record.reservation_count = len(record.reservation_ids)
+            record.contract_count = len(record.contract_ids)
 
     def _compute_followup_flags(self):
         today = fields.Date.context_today(self)
@@ -234,6 +247,28 @@ class PalmatePropertyInquiry(models.Model):
             if record.customer_id.email:
                 template.send_mail(record.id, force_send=False)
         return True
+
+    def action_view_reservations(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Inquiry Reservations"),
+            "res_model": "palmate.property.reservation",
+            "view_mode": "list,form",
+            "domain": [("inquiry_id", "=", self.id)],
+            "context": {"default_inquiry_id": self.id},
+        }
+
+    def action_view_contracts(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Inquiry Contracts"),
+            "res_model": "palmate.property.contract",
+            "view_mode": "list,form",
+            "domain": [("inquiry_id", "=", self.id)],
+            "context": {"default_inquiry_id": self.id},
+        }
 
     @api.model
     def _cron_schedule_followup_activities(self):
@@ -354,6 +389,15 @@ class PalmatePropertyReservation(models.Model):
         required = True,
     )
     notes = fields.Text(string = "Notes")
+    contract_ids = fields.One2many(
+        "palmate.property.contract",
+        "reservation_id",
+        string = "Contracts",
+    )
+    contract_count = fields.Integer(
+        string = "Contract Count",
+        compute = "_compute_contract_count",
+    )
     days_to_expiry = fields.Integer(
         string = "Days to Expiry",
         compute = "_compute_days_to_expiry",
@@ -379,6 +423,10 @@ class PalmatePropertyReservation(models.Model):
                 and record.status == "active"
                 and record.days_to_expiry <= 2
             )
+
+    def _compute_contract_count(self):
+        for record in self:
+            record.contract_count = len(record.contract_ids)
 
     @api.onchange("inquiry_id")
     def _onchange_inquiry_id(self):
@@ -481,6 +529,17 @@ class PalmatePropertyReservation(models.Model):
             if record.customer_id.email:
                 template.send_mail(record.id, force_send=False)
         return True
+
+    def action_view_contracts(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Reservation Contracts"),
+            "res_model": "palmate.property.contract",
+            "view_mode": "list,form",
+            "domain": [("reservation_id", "=", self.id)],
+            "context": {"default_reservation_id": self.id},
+        }
 
     @api.model
     def _cron_schedule_expiry_activities(self):
@@ -627,6 +686,11 @@ class PalmatePropertyContract(models.Model):
         "contract_id",
         string = "Commissions",
     )
+    maintenance_request_ids = fields.One2many(
+        "palmate.maintenance.request",
+        "contract_id",
+        string = "Maintenance Requests",
+    )
     paid_amount = fields.Monetary(
         string = "Paid Amount",
         currency_field = "currency_id",
@@ -644,6 +708,18 @@ class PalmatePropertyContract(models.Model):
         compute = "_compute_payment_totals",
         store = True,
     )
+    payment_count = fields.Integer(
+        string = "Payment Count",
+        compute = "_compute_related_counts",
+    )
+    commission_count = fields.Integer(
+        string = "Commission Count",
+        compute = "_compute_related_counts",
+    )
+    maintenance_count = fields.Integer(
+        string = "Maintenance Count",
+        compute = "_compute_related_counts",
+    )
 
     @api.depends("amount", "payment_line_ids.amount", "payment_line_ids.paid")
     def _compute_payment_totals(self):
@@ -653,6 +729,12 @@ class PalmatePropertyContract(models.Model):
             record.paid_amount = paid_amount
             record.outstanding_amount = max(total_amount - paid_amount, 0.0)
             record.payment_progress = (paid_amount / total_amount * 100.0) if total_amount else 0.0
+
+    def _compute_related_counts(self):
+        for record in self:
+            record.payment_count = len(record.payment_line_ids)
+            record.commission_count = len(record.commission_ids)
+            record.maintenance_count = len(record.maintenance_request_ids)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -758,6 +840,58 @@ class PalmatePropertyContract(models.Model):
                 template.send_mail(record.id, force_send=False)
         return True
 
+    def action_view_payments(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Contract Payment Plan"),
+            "res_model": "palmate.contract.payment",
+            "view_mode": "list,form",
+            "domain": [("contract_id", "=", self.id)],
+            "context": {"default_contract_id": self.id},
+        }
+
+    def action_view_commissions(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Contract Commissions"),
+            "res_model": "palmate.agent.commission",
+            "view_mode": "list,form",
+            "domain": [("contract_id", "=", self.id)],
+            "context": {"default_contract_id": self.id, "default_agent_id": self.agent_id.id},
+        }
+
+    def action_view_maintenance_requests(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Contract Maintenance Requests"),
+            "res_model": "palmate.maintenance.request",
+            "view_mode": "list,form",
+            "domain": [("contract_id", "=", self.id)],
+            "context": {
+                "default_contract_id": self.id,
+                "default_property_id": self.property_id.id,
+                "default_tenant_id": self.customer_id.id,
+            },
+        }
+
+    def action_create_maintenance_request(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Create Maintenance Request"),
+            "res_model": "palmate.maintenance.request",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_contract_id": self.id,
+                "default_property_id": self.property_id.id,
+                "default_tenant_id": self.customer_id.id,
+            },
+        }
+
 
 class PalmateContractPayment(models.Model):
     _name = "palmate.contract.payment"
@@ -794,6 +928,13 @@ class PalmateContractPayment(models.Model):
         compute = "_compute_payment_status",
         store = True,
     )
+    property_id = fields.Many2one(
+        related = "contract_id.property_id",
+        comodel_name = "palmate.property",
+        string = "Property",
+        store = True,
+        readonly = True,
+    )
     currency_id = fields.Many2one(
         related = "contract_id.currency_id",
         comodel_name = "res.currency",
@@ -808,6 +949,46 @@ class PalmateContractPayment(models.Model):
         store = True,
         readonly = True,
     )
+    agent_id = fields.Many2one(
+        related = "contract_id.agent_id",
+        comodel_name = "res.users",
+        string = "Agent",
+        store = True,
+        readonly = True,
+    )
+    inquiry_id = fields.Many2one(
+        related = "contract_id.inquiry_id",
+        comodel_name = "palmate.property.inquiry",
+        string = "Inquiry",
+        store = True,
+        readonly = True,
+    )
+    visit_id = fields.Many2one(
+        related = "contract_id.visit_id",
+        comodel_name = "palmate.property.visit",
+        string = "Visit",
+        store = True,
+        readonly = True,
+    )
+    reservation_id = fields.Many2one(
+        related = "contract_id.reservation_id",
+        comodel_name = "palmate.property.reservation",
+        string = "Reservation",
+        store = True,
+        readonly = True,
+    )
+    company_id = fields.Many2one(
+        related = "contract_id.company_id",
+        comodel_name = "res.company",
+        string = "Company",
+        store = True,
+        readonly = True,
+    )
+    days_overdue = fields.Integer(
+        string = "Days Overdue",
+        compute = "_compute_payment_status",
+        store = True,
+    )
 
     @api.depends("paid", "due_date")
     def _compute_payment_status(self):
@@ -815,10 +996,13 @@ class PalmateContractPayment(models.Model):
         for record in self:
             if record.paid:
                 record.payment_status = "paid"
+                record.days_overdue = 0
             elif record.due_date and record.due_date < today:
                 record.payment_status = "overdue"
+                record.days_overdue = (today - record.due_date).days
             else:
                 record.payment_status = "pending"
+                record.days_overdue = 0
 
 
 class PalmateAgentCommission(models.Model):
@@ -848,6 +1032,48 @@ class PalmateAgentCommission(models.Model):
         compute = "_compute_commission_amount",
         store = True,
     )
+    property_id = fields.Many2one(
+        related = "contract_id.property_id",
+        comodel_name = "palmate.property",
+        string = "Property",
+        store = True,
+        readonly = True,
+    )
+    customer_id = fields.Many2one(
+        related = "contract_id.customer_id",
+        comodel_name = "res.partner",
+        string = "Customer",
+        store = True,
+        readonly = True,
+    )
+    inquiry_id = fields.Many2one(
+        related = "contract_id.inquiry_id",
+        comodel_name = "palmate.property.inquiry",
+        string = "Inquiry",
+        store = True,
+        readonly = True,
+    )
+    visit_id = fields.Many2one(
+        related = "contract_id.visit_id",
+        comodel_name = "palmate.property.visit",
+        string = "Visit",
+        store = True,
+        readonly = True,
+    )
+    reservation_id = fields.Many2one(
+        related = "contract_id.reservation_id",
+        comodel_name = "palmate.property.reservation",
+        string = "Reservation",
+        store = True,
+        readonly = True,
+    )
+    contract_type = fields.Selection(
+        related = "contract_id.contract_type",
+        selection = lambda self: self.env["palmate.property.contract"]._fields["contract_type"].selection,
+        string = "Contract Type",
+        store = True,
+        readonly = True,
+    )
     status = fields.Selection(
         [
             ("pending", "Pending"),
@@ -862,6 +1088,13 @@ class PalmateAgentCommission(models.Model):
         related = "contract_id.currency_id",
         comodel_name = "res.currency",
         string = "Currency",
+        store = True,
+        readonly = True,
+    )
+    company_id = fields.Many2one(
+        related = "contract_id.company_id",
+        comodel_name = "res.company",
+        string = "Company",
         store = True,
         readonly = True,
     )
@@ -898,10 +1131,22 @@ class PalmateMaintenanceRequest(models.Model):
         required = True,
         tracking = True,
     )
+    contract_id = fields.Many2one(
+        "palmate.property.contract",
+        string = "Contract",
+        tracking = True,
+    )
     tenant_id = fields.Many2one(
         "res.partner",
         string = "Tenant",
         tracking = True,
+    )
+    agent_id = fields.Many2one(
+        related = "contract_id.agent_id",
+        comodel_name = "res.users",
+        string = "Contract Agent",
+        store = True,
+        readonly = True,
     )
     issue_type = fields.Selection(
         [
@@ -968,12 +1213,48 @@ class PalmateMaintenanceRequest(models.Model):
         string = "Completion Date",
         tracking = True,
     )
+    due_date = fields.Date(
+        string = "Target Resolution Date",
+        tracking = True,
+    )
+    overdue = fields.Boolean(
+        string = "Overdue",
+        compute = "_compute_overdue",
+    )
+
+    def _compute_overdue(self):
+        today = fields.Date.context_today(self)
+        for record in self:
+            record.overdue = bool(
+                record.due_date and record.due_date < today and record.status != "done"
+            )
+
+    @api.onchange("contract_id")
+    def _onchange_contract_id(self):
+        for record in self:
+            if record.contract_id:
+                record.property_id = record.contract_id.property_id
+                record.tenant_id = record.contract_id.customer_id
+
+    @api.constrains("contract_id", "property_id", "tenant_id")
+    def _check_contract_alignment(self):
+        for record in self:
+            if record.contract_id:
+                if record.property_id and record.property_id != record.contract_id.property_id:
+                    raise ValidationError(_("The maintenance property must match the contract property."))
+                if record.tenant_id and record.tenant_id != record.contract_id.customer_id:
+                    raise ValidationError(_("The maintenance tenant must match the contract customer."))
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get("name", "/") == "/":
                 vals["name"] = self.env["ir.sequence"].next_by_code("palmate.maintenance.request") or "/"
+            contract_id = vals.get("contract_id")
+            if contract_id:
+                contract = self.env["palmate.property.contract"].browse(contract_id)
+                vals.setdefault("property_id", contract.property_id.id)
+                vals.setdefault("tenant_id", contract.customer_id.id)
         return super().create(vals_list)
 
     def action_start(self):

@@ -53,6 +53,12 @@
                         <button name = "action_view_visits" type = "object" class = "oe_stat_button" icon = "fa-calendar">
                             <field name = "visit_count" string = "Visits" widget = "statinfo"/>
                         </button>
+                        <button name = "action_view_reservations" type = "object" class = "oe_stat_button" icon = "fa-bookmark">
+                            <field name = "reservation_count" string = "Reservations" widget = "statinfo"/>
+                        </button>
+                        <button name = "action_view_contracts" type = "object" class = "oe_stat_button" icon = "fa-file-text-o">
+                            <field name = "contract_count" string = "Contracts" widget = "statinfo"/>
+                        </button>
                     </div>
 
                     <div class = "oe_title">
@@ -99,6 +105,33 @@
                                     <field name = "customer_id"/>
                                     <field name = "agent_id"/>
                                     <field name = "visit_date"/>
+                                    <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string = "Reservations">
+                            <field name = "reservation_ids" context = "{'default_inquiry_id': id}">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "visit_id"/>
+                                    <field name = "property_id"/>
+                                    <field name = "customer_id"/>
+                                    <field name = "agent_id"/>
+                                    <field name = "reservation_date"/>
+                                    <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string = "Contracts">
+                            <field name = "contract_ids" context = "{'default_inquiry_id': id}">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "reservation_id"/>
+                                    <field name = "visit_id"/>
+                                    <field name = "property_id"/>
+                                    <field name = "customer_id"/>
+                                    <field name = "agent_id"/>
+                                    <field name = "contract_type"/>
                                     <field name = "status"/>
                                 </list>
                             </field>
@@ -182,6 +215,12 @@
                 </header>
 
                 <sheet>
+                    <div class = "oe_button_box" name = "button_box">
+                        <button name = "action_view_contracts" type = "object" class = "oe_stat_button" icon = "fa-file-text-o">
+                            <field name = "contract_count" string = "Contracts" widget = "statinfo"/>
+                        </button>
+                    </div>
+
                     <div class = "oe_title">
                         <h1><field name = "name"/></h1>
                     </div>
@@ -204,6 +243,23 @@
                     <group>
                         <field name = "notes"/>
                     </group>
+
+                    <notebook>
+                        <page string = "Contracts">
+                            <field name = "contract_ids" context = "{'default_reservation_id': id}">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "visit_id"/>
+                                    <field name = "inquiry_id"/>
+                                    <field name = "property_id"/>
+                                    <field name = "customer_id"/>
+                                    <field name = "agent_id"/>
+                                    <field name = "contract_type"/>
+                                    <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
 
                 <chatter/>
@@ -260,6 +316,18 @@
                 </header>
 
                 <sheet>
+                    <div class = "oe_button_box" name = "button_box">
+                        <button name = "action_view_payments" type = "object" class = "oe_stat_button" icon = "fa-money">
+                            <field name = "payment_count" string = "Payments" widget = "statinfo"/>
+                        </button>
+                        <button name = "action_view_commissions" type = "object" class = "oe_stat_button" icon = "fa-percent">
+                            <field name = "commission_count" string = "Commissions" widget = "statinfo"/>
+                        </button>
+                        <button name = "action_view_maintenance_requests" type = "object" class = "oe_stat_button" icon = "fa-wrench">
+                            <field name = "maintenance_count" string = "Maintenance" widget = "statinfo"/>
+                        </button>
+                    </div>
+
                     <div class = "oe_title">
                         <h1><field name = "name"/></h1>
                     </div>
@@ -318,6 +386,20 @@
                                 </list>
                             </field>
                         </page>
+                        <page string = "Maintenance">
+                            <field name = "maintenance_request_ids" context = "{'default_contract_id': id, 'default_property_id': property_id, 'default_tenant_id': customer_id}">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "property_id"/>
+                                    <field name = "tenant_id"/>
+                                    <field name = "issue_type"/>
+                                    <field name = "priority"/>
+                                    <field name = "due_date"/>
+                                    <field name = "overdue"/>
+                                    <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
                     </notebook>
                 </sheet>
 
@@ -358,19 +440,84 @@
             <list string = "Payment Plan Lines">
                 <field name = "contract_id"/>
                 <field name = "name"/>
+                <field name = "property_id"/>
                 <field name = "customer_id"/>
+                <field name = "agent_id"/>
+                <field name = "inquiry_id" optional = "hide"/>
+                <field name = "reservation_id" optional = "hide"/>
+                <field name = "visit_id" optional = "hide"/>
                 <field name = "due_date"/>
                 <field name = "amount"/>
                 <field name = "paid"/>
                 <field name = "payment_status"/>
+                <field name = "days_overdue"/>
             </list>
+        </field>
+    </record>
+
+    <record id = "view_palmate_contract_payment_form" model = "ir.ui.view">
+        <field name = "name">palmate.contract.payment.form</field>
+        <field name = "model">palmate.contract.payment</field>
+        <field name = "arch" type = "xml">
+            <form string = "Payment Plan Line">
+                <sheet>
+                    <div class = "oe_title">
+                        <h1><field name = "name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name = "contract_id"/>
+                            <field name = "property_id" readonly = "1"/>
+                            <field name = "customer_id" readonly = "1"/>
+                            <field name = "agent_id" readonly = "1"/>
+                        </group>
+                        <group>
+                            <field name = "due_date"/>
+                            <field name = "amount"/>
+                            <field name = "paid"/>
+                            <field name = "payment_status" readonly = "1"/>
+                            <field name = "days_overdue" readonly = "1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name = "inquiry_id" readonly = "1"/>
+                            <field name = "visit_id" readonly = "1"/>
+                        </group>
+                        <group>
+                            <field name = "reservation_id" readonly = "1"/>
+                            <field name = "company_id" readonly = "1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id = "view_palmate_contract_payment_search" model = "ir.ui.view">
+        <field name = "name">palmate.contract.payment.search</field>
+        <field name = "model">palmate.contract.payment</field>
+        <field name = "arch" type = "xml">
+            <search>
+                <field name = "name"/>
+                <field name = "contract_id"/>
+                <field name = "property_id"/>
+                <field name = "customer_id"/>
+                <field name = "agent_id"/>
+                <filter name = "pending" string = "Pending" domain = "[('payment_status', '=', 'pending')]"/>
+                <filter name = "overdue" string = "Overdue" domain = "[('payment_status', '=', 'overdue')]"/>
+                <filter name = "paid" string = "Paid" domain = "[('payment_status', '=', 'paid')]"/>
+                <filter name = "group_by_contract" string = "Contract" context = "{'group_by': 'contract_id'}"/>
+                <filter name = "group_by_agent" string = "Agent" context = "{'group_by': 'agent_id'}"/>
+                <filter name = "group_by_status" string = "Payment Status" context = "{'group_by': 'payment_status'}"/>
+            </search>
         </field>
     </record>
 
     <record id = "action_palmate_contract_payment" model = "ir.actions.act_window">
         <field name = "name">Payment Plans</field>
         <field name = "res_model">palmate.contract.payment</field>
-        <field name = "view_mode">list</field>
+        <field name = "view_mode">list,form</field>
     </record>
 
     <record id = "view_palmate_agent_commission_tree" model = "ir.ui.view">
@@ -380,6 +527,12 @@
             <list string = "Agent Commissions">
                 <field name = "agent_id"/>
                 <field name = "contract_id"/>
+                <field name = "property_id"/>
+                <field name = "customer_id"/>
+                <field name = "contract_type"/>
+                <field name = "inquiry_id" optional = "hide"/>
+                <field name = "reservation_id" optional = "hide"/>
+                <field name = "visit_id" optional = "hide"/>
                 <field name = "commission_percent"/>
                 <field name = "commission_amount"/>
                 <field name = "status"/>
@@ -405,14 +558,46 @@
                         <group>
                             <field name = "agent_id"/>
                             <field name = "contract_id"/>
+                            <field name = "property_id" readonly = "1"/>
+                            <field name = "customer_id" readonly = "1"/>
                         </group>
                         <group>
+                            <field name = "contract_type" readonly = "1"/>
                             <field name = "commission_percent"/>
                             <field name = "commission_amount" readonly = "1"/>
+                            <field name = "company_id" readonly = "1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name = "inquiry_id" readonly = "1"/>
+                            <field name = "visit_id" readonly = "1"/>
+                        </group>
+                        <group>
+                            <field name = "reservation_id" readonly = "1"/>
                         </group>
                     </group>
                 </sheet>
             </form>
+        </field>
+    </record>
+
+    <record id = "view_palmate_agent_commission_search" model = "ir.ui.view">
+        <field name = "name">palmate.agent.commission.search</field>
+        <field name = "model">palmate.agent.commission</field>
+        <field name = "arch" type = "xml">
+            <search>
+                <field name = "agent_id"/>
+                <field name = "contract_id"/>
+                <field name = "property_id"/>
+                <field name = "customer_id"/>
+                <filter name = "pending" string = "Pending" domain = "[('status', '=', 'pending')]"/>
+                <filter name = "approved" string = "Approved" domain = "[('status', '=', 'approved')]"/>
+                <filter name = "paid" string = "Paid" domain = "[('status', '=', 'paid')]"/>
+                <filter name = "group_by_agent" string = "Agent" context = "{'group_by': 'agent_id'}"/>
+                <filter name = "group_by_status" string = "Status" context = "{'group_by': 'status'}"/>
+                <filter name = "group_by_contract_type" string = "Contract Type" context = "{'group_by': 'contract_type'}"/>
+            </search>
         </field>
     </record>
 
@@ -428,12 +613,16 @@
         <field name = "arch" type = "xml">
             <list string = "Maintenance Requests">
                 <field name = "name"/>
+                <field name = "contract_id"/>
                 <field name = "property_id"/>
                 <field name = "tenant_id"/>
+                <field name = "agent_id"/>
                 <field name = "issue_type"/>
                 <field name = "priority"/>
                 <field name = "assigned_partner_id"/>
                 <field name = "reported_date"/>
+                <field name = "due_date"/>
+                <field name = "overdue"/>
                 <field name = "completion_date"/>
                 <field name = "status"/>
                 <field name = "cost"/>
@@ -462,14 +651,18 @@
 
                     <group>
                         <group>
+                            <field name = "contract_id"/>
                             <field name = "property_id"/>
                             <field name = "tenant_id"/>
+                            <field name = "agent_id" readonly = "1"/>
                             <field name = "issue_type"/>
                             <field name = "priority"/>
                         </group>
                         <group>
                             <field name = "assigned_partner_id"/>
                             <field name = "reported_date"/>
+                            <field name = "due_date"/>
+                            <field name = "overdue" readonly = "1"/>
                             <field name = "completion_date" readonly = "1"/>
                             <field name = "cost"/>
                             <field name = "currency_id"/>

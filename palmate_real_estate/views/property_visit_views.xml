@@ -73,6 +73,15 @@
                 </header>
 
                 <sheet>
+                    <div class = "oe_button_box" name = "button_box">
+                        <button name = "action_create_reservation"
+                                type = "object"
+                                class = "oe_stat_button"
+                                icon = "fa-bookmark">
+                            <span class = "o_stat_text">Create Reservation</span>
+                        </button>
+                    </div>
+
                     <div class = "oe_title">
                         <h1>
                             <field name = "name"/>
