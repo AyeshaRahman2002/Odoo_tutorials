@@ -69,29 +69,21 @@
         </field>
     </record>
 
-    <record id = "view_palmate_property_visit_search" model = "ir.ui.view">
-        <field name = "name">palmate.property.visit.search</field>
-        <field name = "model">palmate.property.visit</field>
-        <field name = "arch" type = "xml">
-            <search string = "Search Property Visits">
-                <field name = "name"/>
-                <field name = "property_id"/>
-                <field name = "customer_id"/>
-                <field name = "agent_id"/>
-                <filter name = "scheduled" string = "Scheduled"
-                        domain = "[('status', ' = ', 'scheduled')]"/>
-                <filter name = "completed" string = "Completed"
-                        domain = "[('status', ' = ', 'completed')]"/>
-                <filter name = "cancelled" string = "Cancelled"
-                        domain = "[('status', ' = ', 'cancelled')]"/>
-                <group expand = "0" string = "Group By">
-                    <filter name = "group_by_status" string = "Status"
-                            context = "{'group_by': 'status'}"/>
-                    <filter name = "group_by_agent" string = "Agent"
-                            context = "{'group_by': 'agent_id'}"/>
-                    <filter name = "group_by_property" string = "Property"
-                            context = "{'group_by': 'property_id'}"/>
-                </group>
+    <record id="view_palmate_property_visit_search" model="ir.ui.view">
+        <field name="name">palmate.property.visit.search</field>
+        <field name="model">palmate.property.visit</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="property_id"/>
+                <field name="customer_id"/>
+                <field name="agent_id"/>
+                <filter name="scheduled" string="Scheduled" domain="[('status', '=', 'scheduled')]"/>
+                <filter name="completed" string="Completed" domain="[('status', '=', 'completed')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('status', '=', 'cancelled')]"/>
+                <filter name="group_by_status" string="Status" context="{'group_by': 'status'}"/>
+                <filter name="group_by_agent" string="Agent" context="{'group_by': 'agent_id'}"/>
+                <filter name="group_by_property" string="Property" context="{'group_by': 'property_id'}"/>
             </search>
         </field>
     </record>
