@@ -188,7 +188,6 @@
                 <field name = "status" type = "row"/>
                 <field name = "property_type" type = "col"/>
                 <field name = "price" type = "measure"/>
-                <field name = "id" type = "measure" string = "Properties"/>
             </pivot>
         </field>
     </record>
@@ -199,7 +198,7 @@
         <field name = "arch" type = "xml">
             <graph string = "Properties by Status" type = "bar">
                 <field name = "status"/>
-                <field name = "id" type = "measure" string = "Properties"/>
+                <field name = "__count" type = "measure" string = "Properties"/>
             </graph>
         </field>
     </record>

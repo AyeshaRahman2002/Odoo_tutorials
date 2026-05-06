@@ -133,7 +133,6 @@
             <pivot string = "Visit Analysis">
                 <field name = "agent_id" type = "row"/>
                 <field name = "status" type = "col"/>
-                <field name = "id" type = "measure" string = "Visits"/>
             </pivot>
         </field>
     </record>
@@ -144,7 +143,7 @@
         <field name = "arch" type = "xml">
             <graph string = "Visits by Agent" type = "bar">
                 <field name = "agent_id"/>
-                <field name = "id" type = "measure" string = "Visits"/>
+                <field name = "__count" type = "measure" string = "Visits"/>
             </graph>
         </field>
     </record>
