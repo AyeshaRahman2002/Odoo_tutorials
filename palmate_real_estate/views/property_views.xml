@@ -69,33 +69,54 @@
     <record id = "view_palmate_property_form" model = "ir.ui.view">
         <field name = "name">palmate.property.form</field>
         <field name = "model">palmate.property</field>
-        <field name = "arch" type="xml">
+        <field name = "arch" type = "xml">
             <form string = "Property">
                 <header>
                     <button name = "action_generate_ai_description"
                             string = "Generate Discription"
                             type = "object"
                             class = "btn-secondary"/>
-                    <button name = "action_mark_reserved"
-                            string = "Mark Reserved"
+                    <button name = "action_publish_property"
+                            string = "Publish Property"
                             type = "object"
                             class = "btn-primary"
-                            invisible = "status != 'available'"/>
-                    <button name = "action_mark_available"
-                            string = "Mark Available"
+                            invisible = "status != 'draft'"/>
+                    <button name = "action_reserve_property"
+                            string = "Reserve Property"
                             type = "object"
-                            invisible = "status == 'available'"/>
+                            invisible = "status != 'available'"/>
+                    <button name = "action_mark_sold"
+                            string = "Mark Sold"
+                            type = "object"
+                            invisible = "status not in ('available', 'reserved')"/>
+                    <button name = "action_mark_rented"
+                            string = "Mark Rented"
+                            type = "object"
+                            invisible = "status not in ('available', 'reserved')"/>
+                    <button name = "action_archive_property"
+                            string = "Archive"
+                            type = "object"
+                            invisible = "status == 'archived'"/>
                     <field name = "status" widget = "statusbar"
-                           statusbar_visible = "available,reserved,sold,rented"/>
+                           statusbar_visible = "draft,available,reserved,sold,rented,archived"/>
                 </header>
 
                 <sheet>
                     <div class = "oe_button_box" name = "button_box">
-                        <button name = "action_view_visits"
-                                type = "object"
-                                class = "oe_stat_button"
-                                icon = "fa-calendar">
+                        <button name = "action_view_visits" type = "object" class = "oe_stat_button" icon = "fa-calendar">
                             <field name = "visit_count" string = "Visits" widget = "statinfo"/>
+                        </button>
+                        <button name = "action_view_inquiries" type = "object" class = "oe_stat_button" icon = "fa-comments">
+                            <field name = "inquiry_count" string = "Inquiries" widget = "statinfo"/>
+                        </button>
+                        <button name = "action_view_reservations" type = "object" class = "oe_stat_button" icon = "fa-bookmark">
+                            <field name = "reservation_count" string = "Reservations" widget = "statinfo"/>
+                        </button>
+                        <button name = "action_view_contracts" type = "object" class = "oe_stat_button" icon = "fa-file-text-o">
+                            <field name = "contract_count" string = "Contracts" widget = "statinfo"/>
+                        </button>
+                        <button name = "action_view_maintenance_requests" type = "object" class = "oe_stat_button" icon = "fa-wrench">
+                            <field name = "maintenance_count" string = "Maintenance" widget = "statinfo"/>
                         </button>
                     </div>
 
@@ -141,14 +162,67 @@
                                 </group>
                             </group>
                         </page>
-                        <page string = "Visits">
-                            <field name = "visit_ids">
+                        <page string = "Inquiries">
+                            <field name = "inquiry_ids" context = "{'default_property_id': id}">
                                 <list editable = "bottom">
                                     <field name = "name"/>
+                                    <field name = "customer_id"/>
+                                    <field name = "preferred_location"/>
+                                    <field name = "budget"/>
+                                    <field name = "property_type"/>
+                                    <field name = "agent_id"/>
+                                    <field name = "source"/>
+                                    <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string = "Visits">
+                            <field name = "visit_ids" context = "{'default_property_id': id}">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "inquiry_id"/>
                                     <field name = "customer_id"/>
                                     <field name = "agent_id"/>
                                     <field name = "visit_date"/>
                                     <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string = "Reservations">
+                            <field name = "reservation_ids" context = "{'default_property_id': id}">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "customer_id"/>
+                                    <field name = "reservation_date"/>
+                                    <field name = "expiry_date"/>
+                                    <field name = "deposit_amount"/>
+                                    <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string = "Contracts">
+                            <field name = "contract_ids" context = "{'default_property_id': id}">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "customer_id"/>
+                                    <field name = "agent_id"/>
+                                    <field name = "contract_type"/>
+                                    <field name = "start_date"/>
+                                    <field name = "amount"/>
+                                    <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string = "Maintenance">
+                            <field name = "maintenance_request_ids" context = "{'default_property_id': id}">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "tenant_id"/>
+                                    <field name = "issue_type"/>
+                                    <field name = "priority"/>
+                                    <field name = "assigned_partner_id"/>
+                                    <field name = "status"/>
+                                    <field name = "cost"/>
                                 </list>
                             </field>
                         </page>
@@ -160,22 +234,24 @@
         </field>
     </record>
 
-    <record id="view_palmate_property_search" model="ir.ui.view">
-        <field name="name">palmate.property.search</field>
-        <field name="model">palmate.property</field>
-        <field name="arch" type="xml">
+    <record id = "view_palmate_property_search" model = "ir.ui.view">
+        <field name = "name">palmate.property.search</field>
+        <field name = "model">palmate.property</field>
+        <field name = "arch" type = "xml">
             <search>
-                <field name="name"/>
-                <field name="location"/>
-                <field name="owner_id"/>
-                <field name="agent_id"/>
-                <filter name="available" string="Available" domain="[('status', '=', 'available')]"/>
-                <filter name="reserved" string="Reserved" domain="[('status', '=', 'reserved')]"/>
-                <filter name="sold" string="Sold" domain="[('status', '=', 'sold')]"/>
-                <filter name="rented" string="Rented" domain="[('status', '=', 'rented')]"/>
-                <filter name="group_by_status" string="Status" context="{'group_by': 'status'}"/>
-                <filter name="group_by_agent" string="Agent" context="{'group_by': 'agent_id'}"/>
-                <filter name="group_by_type" string="Property Type" context="{'group_by': 'property_type'}"/>
+                <field name = "name"/>
+                <field name = "location"/>
+                <field name = "owner_id"/>
+                <field name = "agent_id"/>
+                <filter name = "draft" string = "Draft" domain = "[('status', '=', 'draft')]"/>
+                <filter name = "available" string = "Available" domain = "[('status', '=', 'available')]"/>
+                <filter name = "reserved" string = "Reserved" domain = "[('status', '=', 'reserved')]"/>
+                <filter name = "sold" string = "Sold" domain = "[('status', '=', 'sold')]"/>
+                <filter name = "rented" string = "Rented" domain = "[('status', '=', 'rented')]"/>
+                <filter name = "archived" string = "Archived" domain = "[('status', '=', 'archived')]"/>
+                <filter name = "group_by_status" string = "Status" context = "{'group_by': 'status'}"/>
+                <filter name = "group_by_agent" string = "Agent" context = "{'group_by': 'agent_id'}"/>
+                <filter name = "group_by_type" string = "Property Type" context = "{'group_by': 'property_type'}"/>
             </search>
         </field>
     </record>
@@ -187,7 +263,6 @@
             <pivot string = "Properties Analysis">
                 <field name = "status" type = "row"/>
                 <field name = "property_type" type = "col"/>
-                <field name = "property_count" type = "measure"/>
                 <field name = "price" type = "measure"/>
             </pivot>
         </field>
@@ -199,7 +274,7 @@
         <field name = "arch" type = "xml">
             <graph string = "Properties by Status" type = "bar">
                 <field name = "status"/>
-                <field name = "property_count" type = "measure"/>
+                <field name = "__count" type = "measure" string = "Properties"/>
             </graph>
         </field>
     </record>
@@ -216,7 +291,6 @@
         <field name = "view_mode">pivot,graph,list</field>
         <field name = "context">{'search_default_group_by_status': 1}</field>
     </record>
-    
 
     <menuitem id = "menu_palmate_real_estate_root"
               name = "Palmate Real Estate"
@@ -232,6 +306,6 @@
               name = "Property Reporting"
               parent = "menu_palmate_real_estate_root"
               action = "action_palmate_property_reporting"
-              sequence = "30"/>
+              sequence = "60"/>
 
 </odoo>

@@ -47,13 +47,15 @@ class PalmateProperty(models.Model):
 
     status = fields.Selection(
         [
+            ("draft", "Draft"),
             ("available", "Available"),
             ("reserved", "Reserved"),
             ("sold", "Sold"),
             ("rented", "Rented"),
+            ("archived", "Archived"),
         ],
         string = "Status",
-        default = "available",
+        default = "draft",
         required = True,
         tracking = True,
     )
@@ -123,22 +125,85 @@ class PalmateProperty(models.Model):
         string = "Visits",
     )
 
+    inquiry_ids = fields.One2many(
+        "palmate.property.inquiry",
+        "property_id",
+        string = "Inquiries",
+    )
+
+    reservation_ids = fields.One2many(
+        "palmate.property.reservation",
+        "property_id",
+        string = "Reservations",
+    )
+
+    contract_ids = fields.One2many(
+        "palmate.property.contract",
+        "property_id",
+        string = "Contracts",
+    )
+
+    maintenance_request_ids = fields.One2many(
+        "palmate.maintenance.request",
+        "property_id",
+        string = "Maintenance Requests",
+    )
+
     visit_count = fields.Integer(
         string = "Visit Count",
         compute = "_compute_visit_count",
+    )
+
+    inquiry_count = fields.Integer(
+        string = "Inquiry Count",
+        compute = "_compute_related_counts",
+    )
+
+    reservation_count = fields.Integer(
+        string = "Reservation Count",
+        compute = "_compute_related_counts",
+    )
+
+    contract_count = fields.Integer(
+        string = "Contract Count",
+        compute = "_compute_related_counts",
+    )
+
+    maintenance_count = fields.Integer(
+        string = "Maintenance Count",
+        compute = "_compute_related_counts",
     )
 
     def _compute_visit_count(self):
         for record in self:
             record.visit_count = len(record.visit_ids)
 
-    def action_mark_reserved(self):
+    def _compute_related_counts(self):
+        for record in self:
+            record.inquiry_count = len(record.inquiry_ids)
+            record.reservation_count = len(record.reservation_ids)
+            record.contract_count = len(record.contract_ids)
+            record.maintenance_count = len(record.maintenance_request_ids)
+
+    def action_publish_property(self):
+        for record in self:
+            record.status = "available"
+
+    def action_reserve_property(self):
         for record in self:
             record.status = "reserved"
 
-    def action_mark_available(self):
+    def action_mark_sold(self):
         for record in self:
-            record.status = "available"
+            record.status = "sold"
+
+    def action_mark_rented(self):
+        for record in self:
+            record.status = "rented"
+
+    def action_archive_property(self):
+        for record in self:
+            record.status = "archived"
 
     def action_generate_ai_description(self):
         type_labels = dict(self._fields["property_type"].selection)
@@ -209,4 +274,48 @@ class PalmateProperty(models.Model):
                 "default_property_id": self.id,
                 "search_default_group_by_status": 1,
             },
+        }
+
+    def action_view_inquiries(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Property Inquiries"),
+            "res_model": "palmate.property.inquiry",
+            "view_mode": "list,form",
+            "domain": [("property_id", "=", self.id)],
+            "context": {"default_property_id": self.id},
+        }
+
+    def action_view_reservations(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Property Reservations"),
+            "res_model": "palmate.property.reservation",
+            "view_mode": "list,form",
+            "domain": [("property_id", "=", self.id)],
+            "context": {"default_property_id": self.id},
+        }
+
+    def action_view_contracts(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Property Contracts"),
+            "res_model": "palmate.property.contract",
+            "view_mode": "list,form",
+            "domain": [("property_id", "=", self.id)],
+            "context": {"default_property_id": self.id},
+        }
+
+    def action_view_maintenance_requests(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Maintenance Requests"),
+            "res_model": "palmate.maintenance.request",
+            "view_mode": "list,form",
+            "domain": [("property_id", "=", self.id)],
+            "context": {"default_property_id": self.id},
         }

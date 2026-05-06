@@ -1,0 +1,498 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<odoo>
+
+    <record id = "view_palmate_property_inquiry_tree" model = "ir.ui.view">
+        <field name = "name">palmate.property.inquiry.tree</field>
+        <field name = "model">palmate.property.inquiry</field>
+        <field name = "arch" type = "xml">
+            <list string = "Property Inquiries">
+                <field name = "name"/>
+                <field name = "customer_id"/>
+                <field name = "property_id"/>
+                <field name = "preferred_location"/>
+                <field name = "budget"/>
+                <field name = "property_type"/>
+                <field name = "agent_id"/>
+                <field name = "source"/>
+                <field name = "status"/>
+            </list>
+        </field>
+    </record>
+
+    <record id = "view_palmate_property_inquiry_form" model = "ir.ui.view">
+        <field name = "name">palmate.property.inquiry.form</field>
+        <field name = "model">palmate.property.inquiry</field>
+        <field name = "arch" type = "xml">
+            <form string = "Property Inquiry">
+                <header>
+                    <button name = "action_qualify" string = "Qualify" type = "object" class = "btn-primary"
+                            invisible = "status != 'inquiry'"/>
+                    <button name = "action_schedule_visit" string = "Schedule Visit" type = "object"
+                            invisible = "status not in ('qualified', 'inquiry')"/>
+                    <button name = "action_create_visit" string = "Create Visit" type = "object"
+                            invisible = "status not in ('qualified', 'visit_scheduled', 'offer_sent')"/>
+                    <button name = "action_send_offer" string = "Send Offer" type = "object"
+                            invisible = "status not in ('qualified', 'visit_scheduled')"/>
+                    <button name = "action_mark_won" string = "Mark Won" type = "object"
+                            invisible = "status == 'won'"/>
+                    <button name = "action_mark_lost" string = "Mark Lost" type = "object"
+                            invisible = "status in ('won', 'lost')"/>
+                    <field name = "status" widget = "statusbar"
+                           statusbar_visible = "inquiry,qualified,visit_scheduled,offer_sent,won,lost"/>
+                </header>
+
+                <sheet>
+                    <div class = "oe_button_box" name = "button_box">
+                        <button name = "action_view_visits" type = "object" class = "oe_stat_button" icon = "fa-calendar">
+                            <field name = "visit_count" string = "Visits" widget = "statinfo"/>
+                        </button>
+                    </div>
+
+                    <div class = "oe_title">
+                        <h1><field name = "name"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name = "customer_id"/>
+                            <field name = "property_id"/>
+                            <field name = "agent_id"/>
+                        </group>
+                        <group>
+                            <field name = "source"/>
+                            <field name = "currency_id"/>
+                            <field name = "company_id"/>
+                        </group>
+                    </group>
+
+                    <group string = "Requirements">
+                        <group>
+                            <field name = "preferred_location"/>
+                            <field name = "property_type"/>
+                        </group>
+                        <group>
+                            <field name = "budget"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string = "Notes">
+                            <field name = "notes"/>
+                        </page>
+                        <page string = "Visits">
+                            <field name = "visit_ids" context = "{'default_inquiry_id': id}">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "property_id"/>
+                                    <field name = "customer_id"/>
+                                    <field name = "agent_id"/>
+                                    <field name = "visit_date"/>
+                                    <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id = "view_palmate_property_inquiry_search" model = "ir.ui.view">
+        <field name = "name">palmate.property.inquiry.search</field>
+        <field name = "model">palmate.property.inquiry</field>
+        <field name = "arch" type = "xml">
+            <search>
+                <field name = "name"/>
+                <field name = "customer_id"/>
+                <field name = "property_id"/>
+                <field name = "agent_id"/>
+                <filter name = "status_inquiry" string = "Inquiry" domain = "[('status', '=', 'inquiry')]"/>
+                <filter name = "status_qualified" string = "Qualified" domain = "[('status', '=', 'qualified')]"/>
+                <filter name = "status_visit_scheduled" string = "Visit Scheduled" domain = "[('status', '=', 'visit_scheduled')]"/>
+                <filter name = "status_offer_sent" string = "Offer Sent" domain = "[('status', '=', 'offer_sent')]"/>
+                <filter name = "status_won" string = "Won" domain = "[('status', '=', 'won')]"/>
+                <filter name = "status_lost" string = "Lost" domain = "[('status', '=', 'lost')]"/>
+                <filter name = "group_by_status" string = "Status" context = "{'group_by': 'status'}"/>
+                <filter name = "group_by_source" string = "Source" context = "{'group_by': 'source'}"/>
+                <filter name = "group_by_agent" string = "Agent" context = "{'group_by': 'agent_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id = "action_palmate_property_inquiry" model = "ir.actions.act_window">
+        <field name = "name">Property Inquiries</field>
+        <field name = "res_model">palmate.property.inquiry</field>
+        <field name = "view_mode">list,form</field>
+    </record>
+
+    <record id = "view_palmate_property_reservation_tree" model = "ir.ui.view">
+        <field name = "name">palmate.property.reservation.tree</field>
+        <field name = "model">palmate.property.reservation</field>
+        <field name = "arch" type = "xml">
+            <list string = "Property Reservations">
+                <field name = "name"/>
+                <field name = "property_id"/>
+                <field name = "customer_id"/>
+                <field name = "reservation_date"/>
+                <field name = "expiry_date"/>
+                <field name = "deposit_amount"/>
+                <field name = "status"/>
+            </list>
+        </field>
+    </record>
+
+    <record id = "view_palmate_property_reservation_form" model = "ir.ui.view">
+        <field name = "name">palmate.property.reservation.form</field>
+        <field name = "model">palmate.property.reservation</field>
+        <field name = "arch" type = "xml">
+            <form string = "Property Reservation">
+                <header>
+                    <button name = "action_activate" string = "Activate" type = "object"
+                            invisible = "status == 'active'"/>
+                    <button name = "action_expire" string = "Expire" type = "object"
+                            invisible = "status in ('expired', 'converted', 'cancelled')"/>
+                    <button name = "action_convert" string = "Convert" type = "object"
+                            invisible = "status in ('converted', 'cancelled')"/>
+                    <button name = "action_cancel" string = "Cancel" type = "object"
+                            invisible = "status == 'cancelled'"/>
+                    <field name = "status" widget = "statusbar"
+                           statusbar_visible = "active,expired,converted,cancelled"/>
+                </header>
+
+                <sheet>
+                    <div class = "oe_title">
+                        <h1><field name = "name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name = "property_id"/>
+                            <field name = "customer_id"/>
+                            <field name = "inquiry_id"/>
+                        </group>
+                        <group>
+                            <field name = "reservation_date"/>
+                            <field name = "expiry_date"/>
+                            <field name = "deposit_amount"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name = "notes"/>
+                    </group>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id = "action_palmate_property_reservation" model = "ir.actions.act_window">
+        <field name = "name">Reservations</field>
+        <field name = "res_model">palmate.property.reservation</field>
+        <field name = "view_mode">list,form</field>
+    </record>
+
+    <record id = "view_palmate_property_contract_tree" model = "ir.ui.view">
+        <field name = "name">palmate.property.contract.tree</field>
+        <field name = "model">palmate.property.contract</field>
+        <field name = "arch" type = "xml">
+            <list string = "Property Contracts">
+                <field name = "name"/>
+                <field name = "property_id"/>
+                <field name = "customer_id"/>
+                <field name = "agent_id"/>
+                <field name = "contract_type"/>
+                <field name = "start_date"/>
+                <field name = "end_date"/>
+                <field name = "amount"/>
+                <field name = "status"/>
+            </list>
+        </field>
+    </record>
+
+    <record id = "view_palmate_property_contract_form" model = "ir.ui.view">
+        <field name = "name">palmate.property.contract.form</field>
+        <field name = "model">palmate.property.contract</field>
+        <field name = "arch" type = "xml">
+            <form string = "Property Contract">
+                <header>
+                    <button name = "action_sign" string = "Sign" type = "object"
+                            class = "btn-primary" invisible = "status != 'draft'"/>
+                    <button name = "action_activate" string = "Activate" type = "object"
+                            invisible = "status != 'signed'"/>
+                    <button name = "action_close" string = "Close" type = "object"
+                            invisible = "status == 'closed'"/>
+                    <field name = "status" widget = "statusbar"
+                           statusbar_visible = "draft,signed,active,closed"/>
+                </header>
+
+                <sheet>
+                    <div class = "oe_title">
+                        <h1><field name = "name"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name = "property_id"/>
+                            <field name = "customer_id"/>
+                            <field name = "agent_id"/>
+                            <field name = "contract_type"/>
+                        </group>
+                        <group>
+                            <field name = "start_date"/>
+                            <field name = "end_date" invisible = "contract_type != 'rent'"/>
+                            <field name = "amount"/>
+                            <field name = "currency_id"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group>
+                            <field name = "reservation_id"/>
+                            <field name = "inquiry_id"/>
+                        </group>
+                        <group>
+                            <field name = "company_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string = "Summary">
+                            <field name = "payment_plan" placeholder = "Outline the overall deal structure or payment summary."/>
+                        </page>
+                        <page string = "Payment Plan">
+                            <field name = "payment_line_ids">
+                                <list editable = "bottom">
+                                    <field name = "name"/>
+                                    <field name = "due_date"/>
+                                    <field name = "amount"/>
+                                    <field name = "paid"/>
+                                    <field name = "payment_status"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string = "Commissions">
+                            <field name = "commission_ids">
+                                <list editable = "bottom">
+                                    <field name = "agent_id"/>
+                                    <field name = "commission_percent"/>
+                                    <field name = "commission_amount"/>
+                                    <field name = "status"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id = "view_palmate_property_contract_search" model = "ir.ui.view">
+        <field name = "name">palmate.property.contract.search</field>
+        <field name = "model">palmate.property.contract</field>
+        <field name = "arch" type = "xml">
+            <search>
+                <field name = "name"/>
+                <field name = "property_id"/>
+                <field name = "customer_id"/>
+                <field name = "agent_id"/>
+                <filter name = "status_draft" string = "Draft" domain = "[('status', '=', 'draft')]"/>
+                <filter name = "status_signed" string = "Signed" domain = "[('status', '=', 'signed')]"/>
+                <filter name = "status_active" string = "Active" domain = "[('status', '=', 'active')]"/>
+                <filter name = "status_closed" string = "Closed" domain = "[('status', '=', 'closed')]"/>
+                <filter name = "group_by_type" string = "Contract Type" context = "{'group_by': 'contract_type'}"/>
+                <filter name = "group_by_agent" string = "Agent" context = "{'group_by': 'agent_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id = "action_palmate_property_contract" model = "ir.actions.act_window">
+        <field name = "name">Contracts</field>
+        <field name = "res_model">palmate.property.contract</field>
+        <field name = "view_mode">list,form</field>
+    </record>
+
+    <record id = "view_palmate_contract_payment_tree" model = "ir.ui.view">
+        <field name = "name">palmate.contract.payment.tree</field>
+        <field name = "model">palmate.contract.payment</field>
+        <field name = "arch" type = "xml">
+            <list string = "Payment Plan Lines">
+                <field name = "contract_id"/>
+                <field name = "name"/>
+                <field name = "customer_id"/>
+                <field name = "due_date"/>
+                <field name = "amount"/>
+                <field name = "paid"/>
+                <field name = "payment_status"/>
+            </list>
+        </field>
+    </record>
+
+    <record id = "action_palmate_contract_payment" model = "ir.actions.act_window">
+        <field name = "name">Payment Plans</field>
+        <field name = "res_model">palmate.contract.payment</field>
+        <field name = "view_mode">list</field>
+    </record>
+
+    <record id = "view_palmate_agent_commission_tree" model = "ir.ui.view">
+        <field name = "name">palmate.agent.commission.tree</field>
+        <field name = "model">palmate.agent.commission</field>
+        <field name = "arch" type = "xml">
+            <list string = "Agent Commissions">
+                <field name = "agent_id"/>
+                <field name = "contract_id"/>
+                <field name = "commission_percent"/>
+                <field name = "commission_amount"/>
+                <field name = "status"/>
+            </list>
+        </field>
+    </record>
+
+    <record id = "view_palmate_agent_commission_form" model = "ir.ui.view">
+        <field name = "name">palmate.agent.commission.form</field>
+        <field name = "model">palmate.agent.commission</field>
+        <field name = "arch" type = "xml">
+            <form string = "Agent Commission">
+                <header>
+                    <button name = "action_approve" string = "Approve" type = "object"
+                            invisible = "status != 'pending'"/>
+                    <button name = "action_mark_paid" string = "Mark Paid" type = "object"
+                            invisible = "status == 'paid'"/>
+                    <field name = "status" widget = "statusbar"
+                           statusbar_visible = "pending,approved,paid"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name = "agent_id"/>
+                            <field name = "contract_id"/>
+                        </group>
+                        <group>
+                            <field name = "commission_percent"/>
+                            <field name = "commission_amount" readonly = "1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id = "action_palmate_agent_commission" model = "ir.actions.act_window">
+        <field name = "name">Commissions</field>
+        <field name = "res_model">palmate.agent.commission</field>
+        <field name = "view_mode">list,form</field>
+    </record>
+
+    <record id = "view_palmate_maintenance_request_tree" model = "ir.ui.view">
+        <field name = "name">palmate.maintenance.request.tree</field>
+        <field name = "model">palmate.maintenance.request</field>
+        <field name = "arch" type = "xml">
+            <list string = "Maintenance Requests">
+                <field name = "name"/>
+                <field name = "property_id"/>
+                <field name = "tenant_id"/>
+                <field name = "issue_type"/>
+                <field name = "priority"/>
+                <field name = "assigned_partner_id"/>
+                <field name = "status"/>
+                <field name = "cost"/>
+            </list>
+        </field>
+    </record>
+
+    <record id = "view_palmate_maintenance_request_form" model = "ir.ui.view">
+        <field name = "name">palmate.maintenance.request.form</field>
+        <field name = "model">palmate.maintenance.request</field>
+        <field name = "arch" type = "xml">
+            <form string = "Maintenance Request">
+                <header>
+                    <button name = "action_start" string = "Start Work" type = "object"
+                            invisible = "status != 'new'"/>
+                    <button name = "action_done" string = "Mark Done" type = "object"
+                            invisible = "status == 'done'"/>
+                    <field name = "status" widget = "statusbar"
+                           statusbar_visible = "new,in_progress,done"/>
+                </header>
+
+                <sheet>
+                    <div class = "oe_title">
+                        <h1><field name = "name"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name = "property_id"/>
+                            <field name = "tenant_id"/>
+                            <field name = "issue_type"/>
+                            <field name = "priority"/>
+                        </group>
+                        <group>
+                            <field name = "assigned_partner_id"/>
+                            <field name = "cost"/>
+                            <field name = "currency_id"/>
+                            <field name = "company_id"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name = "description"/>
+                    </group>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id = "action_palmate_maintenance_request" model = "ir.actions.act_window">
+        <field name = "name">Maintenance Requests</field>
+        <field name = "res_model">palmate.maintenance.request</field>
+        <field name = "view_mode">list,form</field>
+    </record>
+
+    <menuitem id = "menu_palmate_property_inquiry"
+              name = "Inquiries"
+              parent = "menu_palmate_real_estate_root"
+              action = "action_palmate_property_inquiry"
+              sequence = "20"/>
+
+    <menuitem id = "menu_palmate_property_visit"
+              name = "Property Visits"
+              parent = "menu_palmate_real_estate_root"
+              action = "action_palmate_property_visit"
+              sequence = "30"/>
+
+    <menuitem id = "menu_palmate_property_reservation"
+              name = "Reservations"
+              parent = "menu_palmate_real_estate_root"
+              action = "action_palmate_property_reservation"
+              sequence = "40"/>
+
+    <menuitem id = "menu_palmate_property_contract"
+              name = "Contracts"
+              parent = "menu_palmate_real_estate_root"
+              action = "action_palmate_property_contract"
+              sequence = "50"/>
+
+    <menuitem id = "menu_palmate_contract_payment"
+              name = "Payment Plans"
+              parent = "menu_palmate_real_estate_root"
+              action = "action_palmate_contract_payment"
+              sequence = "55"/>
+
+    <menuitem id = "menu_palmate_agent_commission"
+              name = "Commissions"
+              parent = "menu_palmate_real_estate_root"
+              action = "action_palmate_agent_commission"
+              sequence = "56"/>
+
+    <menuitem id = "menu_palmate_maintenance_request"
+              name = "Maintenance"
+              parent = "menu_palmate_real_estate_root"
+              action = "action_palmate_maintenance_request"
+              sequence = "57"/>
+
+</odoo>

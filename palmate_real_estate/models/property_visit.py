@@ -28,6 +28,12 @@ class PalmatePropertyVisit(models.Model):
         tracking = True,
     )
 
+    inquiry_id = fields.Many2one(
+        "palmate.property.inquiry",
+        string = "Inquiry",
+        tracking = True,
+    )
+
     agent_id = fields.Many2one(
         "res.users",
         string = "Agent",

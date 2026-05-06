@@ -21,6 +21,7 @@ This module manages:
         "security/ir.model.access.csv",
         "views/property_views.xml",
         "views/property_visit_views.xml",
+        "views/real_estate_workflow_views.xml",
     ],
     "installable": True,
     "application": True,

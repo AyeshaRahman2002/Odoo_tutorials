@@ -1,3 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_palmate_property_user,palmate.property.user,model_palmate_property,base.group_user,1,1,1,0
 access_palmate_property_visit_user,palmate.property.visit.user,model_palmate_property_visit,base.group_user,1,1,1,0
+access_palmate_property_inquiry_user,palmate.property.inquiry.user,model_palmate_property_inquiry,base.group_user,1,1,1,0
+access_palmate_property_reservation_user,palmate.property.reservation.user,model_palmate_property_reservation,base.group_user,1,1,1,0
+access_palmate_property_contract_user,palmate.property.contract.user,model_palmate_property_contract,base.group_user,1,1,1,0
+access_palmate_contract_payment_user,palmate.contract.payment.user,model_palmate_contract_payment,base.group_user,1,1,1,0
+access_palmate_agent_commission_user,palmate.agent.commission.user,model_palmate_agent_commission,base.group_user,1,1,1,0
+access_palmate_maintenance_request_user,palmate.maintenance.request.user,model_palmate_maintenance_request,base.group_user,1,1,1,0
