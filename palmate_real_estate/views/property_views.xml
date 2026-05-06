@@ -82,31 +82,22 @@
         </field>
     </record>
 
-    <record id = "view_palmate_property_search" model = "ir.ui.view">
-        <field name = "name">palmate.property.search</field>
-        <field name = "model">palmate.property</field>
-        <field name = "arch" type = "xml">
-            <search string = "Search Properties">
-                <field name = "name"/>
-                <field name = "location"/>
-                <field name = "owner_id"/>
-                <field name = "agent_id"/>
-                <filter name = "available" string = "Available"
-                        domain = "[('status', ' = ', 'available')]"/>
-                <filter name = "reserved" string = "Reserved"
-                        domain = "[('status', ' = ', 'reserved')]"/>
-                <filter name = "sold" string = "Sold"
-                        domain = "[('status', ' = ', 'sold')]"/>
-                <filter name = "rented" string = "Rented"
-                        domain = "[('status', ' = ', 'rented')]"/>
-                <group expand = "0" string = "Group By">
-                    <filter name = "group_by_status" string = "Status"
-                            context = "{'group_by': 'status'}"/>
-                    <filter name = "group_by_agent" string = "Agent"
-                            context = "{'group_by': 'agent_id'}"/>
-                    <filter name = "group_by_type" string = "Property Type"
-                            context = "{'group_by': 'property_type'}"/>
-                </group>
+    <record id="view_palmate_property_search" model="ir.ui.view">
+        <field name="name">palmate.property.search</field>
+        <field name="model">palmate.property</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="location"/>
+                <field name="owner_id"/>
+                <field name="agent_id"/>
+                <filter name="available" string="Available" domain="[('status', '=', 'available')]"/>
+                <filter name="reserved" string="Reserved" domain="[('status', '=', 'reserved')]"/>
+                <filter name="sold" string="Sold" domain="[('status', '=', 'sold')]"/>
+                <filter name="rented" string="Rented" domain="[('status', '=', 'rented')]"/>
+                <filter name="group_by_status" string="Status" context="{'group_by': 'status'}"/>
+                <filter name="group_by_agent" string="Agent" context="{'group_by': 'agent_id'}"/>
+                <filter name="group_by_type" string="Property Type" context="{'group_by': 'property_type'}"/>
             </search>
         </field>
     </record>
