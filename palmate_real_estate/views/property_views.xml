@@ -6,6 +6,7 @@
         <field name = "model">palmate.property</field>
         <field name = "arch" type = "xml">
             <list string = "Properties">
+                <field name = "property_image" widget = "image" optional = "hide"/>
                 <field name = "name"/>
                 <field name = "property_type"/>
                 <field name = "location"/>
@@ -18,12 +19,63 @@
         </field>
     </record>
 
+    <record id = "view_palmate_property_kanban" model = "ir.ui.view">
+        <field name = "name">palmate.property.kanban</field>
+        <field name = "model">palmate.property</field>
+        <field name = "arch" type = "xml">
+            <kanban default_group_by = "status" class = "o_kanban_small_column">
+                <field name = "name"/>
+                <field name = "property_type"/>
+                <field name = "location"/>
+                <field name = "price"/>
+                <field name = "currency_id"/>
+                <field name = "agent_id"/>
+                <field name = "visit_count"/>
+                <field name = "property_image"/>
+                <templates>
+                    <t t-name = "card">
+                        <div class = "o_kanban_record">
+                            <div class = "o_kanban_image">
+                                <field name = "property_image" widget = "image" options = "{'size': [0, 90]}"/>
+                            </div>
+                            <div class = "oe_kanban_details">
+                                <strong class = "o_kanban_record_title">
+                                    <field name = "name"/>
+                                </strong>
+                                <div>
+                                    <field name = "property_type"/>
+                                </div>
+                                <div>
+                                    <field name = "location"/>
+                                </div>
+                                <div>
+                                    <field name = "price"/>
+                                </div>
+                                <div>
+                                    <span>Visits: </span>
+                                    <field name = "visit_count"/>
+                                </div>
+                                <div>
+                                    <field name = "agent_id"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
     <record id = "view_palmate_property_form" model = "ir.ui.view">
         <field name = "name">palmate.property.form</field>
         <field name = "model">palmate.property</field>
         <field name = "arch" type="xml">
             <form string = "Property">
                 <header>
+                    <button name = "action_generate_ai_description"
+                            string = "Generate AI Description"
+                            type = "object"
+                            class = "btn-secondary"/>
                     <button name = "action_mark_reserved"
                             string = "Mark Reserved"
                             type = "object"
@@ -38,6 +90,15 @@
                 </header>
 
                 <sheet>
+                    <div class = "oe_button_box" name = "button_box">
+                        <button name = "action_view_visits"
+                                type = "object"
+                                class = "oe_stat_button"
+                                icon = "fa-calendar">
+                            <field name = "visit_count" string = "Visits" widget = "statinfo"/>
+                        </button>
+                    </div>
+
                     <div class = "oe_title">
                         <h1>
                             <field name = "name"/>
@@ -46,6 +107,8 @@
 
                     <group>
                         <group>
+                            <field name = "property_image" widget = "image" class = "oe_avatar"
+                                   options = "{'preview_image': 'property_image'}"/>
                             <field name = "property_type"/>
                             <field name = "location"/>
                             <field name = "owner_id"/>
@@ -60,8 +123,23 @@
                     </group>
 
                     <notebook>
+                        <page string = "AI Description">
+                            <field name = "ai_description" placeholder = "Use the button above to generate a draft description."/>
+                        </page>
                         <page string = "Notes">
                             <field name = "notes"/>
+                        </page>
+                        <page string = "Documents">
+                            <group>
+                                <group>
+                                    <field name = "title_deed_file" filename = "title_deed_filename"/>
+                                    <field name = "title_deed_filename" invisible = "1"/>
+                                </group>
+                                <group>
+                                    <field name = "brochure_file" filename = "brochure_filename"/>
+                                    <field name = "brochure_filename" invisible = "1"/>
+                                </group>
+                            </group>
                         </page>
                         <page string = "Visits">
                             <field name = "visit_ids">
@@ -102,10 +180,41 @@
         </field>
     </record>
 
+    <record id = "view_palmate_property_pivot" model = "ir.ui.view">
+        <field name = "name">palmate.property.pivot</field>
+        <field name = "model">palmate.property</field>
+        <field name = "arch" type = "xml">
+            <pivot string = "Properties Analysis">
+                <field name = "status" type = "row"/>
+                <field name = "property_type" type = "col"/>
+                <field name = "price" type = "measure"/>
+                <field name = "id" type = "measure" string = "Properties"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id = "view_palmate_property_graph" model = "ir.ui.view">
+        <field name = "name">palmate.property.graph</field>
+        <field name = "model">palmate.property</field>
+        <field name = "arch" type = "xml">
+            <graph string = "Properties by Status" type = "bar">
+                <field name = "status"/>
+                <field name = "id" type = "measure" string = "Properties"/>
+            </graph>
+        </field>
+    </record>
+
     <record id = "action_palmate_property" model = "ir.actions.act_window">
         <field name = "name">Properties</field>
         <field name = "res_model">palmate.property</field>
-        <field name = "view_mode">list,form</field>
+        <field name = "view_mode">kanban,list,form,pivot,graph</field>
+    </record>
+
+    <record id = "action_palmate_property_reporting" model = "ir.actions.act_window">
+        <field name = "name">Property Reporting</field>
+        <field name = "res_model">palmate.property</field>
+        <field name = "view_mode">pivot,graph,list</field>
+        <field name = "context">{'search_default_group_by_status': 1}</field>
     </record>
 
     <menuitem id = "menu_palmate_real_estate_root"
@@ -117,5 +226,11 @@
               parent = "menu_palmate_real_estate_root"
               action = "action_palmate_property"
               sequence = "10"/>
+
+    <menuitem id = "menu_palmate_property_reporting"
+              name = "Property Reporting"
+              parent = "menu_palmate_real_estate_root"
+              action = "action_palmate_property_reporting"
+              sequence = "30"/>
 
 </odoo>

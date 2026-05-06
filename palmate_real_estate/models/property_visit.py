@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import _, fields, models
 
 
 class PalmatePropertyVisit(models.Model):
@@ -45,6 +45,10 @@ class PalmatePropertyVisit(models.Model):
         [
             ("scheduled", "Scheduled"),
             ("completed", "Completed"),
+            ("interested", "Interested"),
+            ("offer_sent", "Offer Sent"),
+            ("closed", "Closed"),
+            ("lost", "Lost"),
             ("cancelled", "Cancelled"),
         ],
         string = "Status",
@@ -64,9 +68,49 @@ class PalmatePropertyVisit(models.Model):
         string = "Customer Feedback",
     )
 
+    preferred_location = fields.Char(
+        string = "Preferred Location",
+        tracking = True,
+    )
+
+    preferred_budget = fields.Monetary(
+        string = "Budget",
+        currency_field = "currency_id",
+        tracking = True,
+    )
+
+    preferred_property_type = fields.Selection(
+        selection = lambda self: self.env["palmate.property"]._fields["property_type"].selection,
+        string = "Preferred Property Type",
+        tracking = True,
+    )
+
+    currency_id = fields.Many2one(
+        "res.currency",
+        string = "Currency",
+        default = lambda self: self.env.company.currency_id,
+        required = True,
+    )
+
     def action_complete(self):
         for record in self:
             record.status = "completed"
+
+    def action_mark_interested(self):
+        for record in self:
+            record.status = "interested"
+
+    def action_send_offer(self):
+        for record in self:
+            record.status = "offer_sent"
+
+    def action_close(self):
+        for record in self:
+            record.status = "closed"
+
+    def action_mark_lost(self):
+        for record in self:
+            record.status = "lost"
 
     def action_cancel(self):
         for record in self:
@@ -75,3 +119,26 @@ class PalmatePropertyVisit(models.Model):
     def action_reset_to_scheduled(self):
         for record in self:
             record.status = "scheduled"
+
+    def action_suggest_matching_properties(self):
+        self.ensure_one()
+
+        domain = [("status", "=", "available")]
+        if self.preferred_property_type:
+            domain.append(("property_type", "=", self.preferred_property_type))
+        if self.preferred_location:
+            domain.append(("location", "ilike", self.preferred_location))
+        if self.preferred_budget:
+            domain.append(("price", "<=", self.preferred_budget))
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Suggested Properties"),
+            "res_model": "palmate.property",
+            "view_mode": "kanban,list,form",
+            "domain": domain,
+            "context": {
+                "search_default_available": 1,
+                "default_agent_id": self.agent_id.id,
+            },
+        }
