@@ -198,7 +198,6 @@
         <field name = "arch" type = "xml">
             <graph string = "Properties by Status" type = "bar">
                 <field name = "status"/>
-                <field name = "__count" type = "measure" string = "Properties"/>
             </graph>
         </field>
     </record>
