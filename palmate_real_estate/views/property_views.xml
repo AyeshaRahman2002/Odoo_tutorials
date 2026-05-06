@@ -187,6 +187,7 @@
             <pivot string = "Properties Analysis">
                 <field name = "status" type = "row"/>
                 <field name = "property_type" type = "col"/>
+                <field name = "property_count" type = "measure"/>
                 <field name = "price" type = "measure"/>
             </pivot>
         </field>
@@ -198,6 +199,7 @@
         <field name = "arch" type = "xml">
             <graph string = "Properties by Status" type = "bar">
                 <field name = "status"/>
+                <field name = "property_count" type = "measure"/>
             </graph>
         </field>
     </record>
@@ -214,6 +216,7 @@
         <field name = "view_mode">pivot,graph,list</field>
         <field name = "context">{'search_default_group_by_status': 1}</field>
     </record>
+    
 
     <menuitem id = "menu_palmate_real_estate_root"
               name = "Palmate Real Estate"

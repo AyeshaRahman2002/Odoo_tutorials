@@ -16,8 +16,8 @@ class PalmatePropertyVisit(models.Model):
 
     property_id = fields.Many2one(
         "palmate.property",
-        string = "Property",
-        required = True,
+        string = "Selected Property",
+        required = False,
         tracking = True,
     )
 

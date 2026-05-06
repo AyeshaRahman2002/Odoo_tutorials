@@ -64,6 +64,11 @@ class PalmateProperty(models.Model):
         tracking = True,
     )
 
+    property_count = fields.Integer(
+        string = "Property Count",
+        default = 1,
+    )
+
     currency_id = fields.Many2one(
         "res.currency",
         string = "Currency",
