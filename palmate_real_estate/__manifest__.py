@@ -20,6 +20,8 @@ This module manages:
     "data": [
         "security/ir.model.access.csv",
         "data/sequence_data.xml",
+        "data/mail_template_data.xml",
+        "data/cron_data.xml",
         "views/property_views.xml",
         "views/property_visit_views.xml",
         "views/real_estate_workflow_views.xml",

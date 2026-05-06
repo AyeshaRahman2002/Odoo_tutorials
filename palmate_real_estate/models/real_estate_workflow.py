@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
@@ -125,10 +127,27 @@ class PalmatePropertyInquiry(models.Model):
         default = 10.0,
         tracking = True,
     )
+    overdue_followup = fields.Boolean(
+        string = "Overdue Follow-up",
+        compute = "_compute_followup_flags",
+    )
+    followup_reminder_sent_on = fields.Date(
+        string = "Follow-up Reminder Sent On",
+        copy = False,
+    )
 
     def _compute_visit_count(self):
         for record in self:
             record.visit_count = len(record.visit_ids)
+
+    def _compute_followup_flags(self):
+        today = fields.Date.context_today(self)
+        for record in self:
+            record.overdue_followup = bool(
+                record.followup_date
+                and record.followup_date < today
+                and record.status not in ("won", "lost")
+            )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -208,6 +227,51 @@ class PalmatePropertyInquiry(models.Model):
                 "default_agent_id": self.agent_id.id,
             },
         }
+
+    def action_send_inquiry_email(self):
+        template = self.env.ref("palmate_real_estate.mail_template_property_inquiry_update")
+        for record in self:
+            if record.customer_id.email:
+                template.send_mail(record.id, force_send=False)
+        return True
+
+    @api.model
+    def _cron_schedule_followup_activities(self):
+        today = fields.Date.context_today(self)
+        model_id = self.env["ir.model"]._get_id(self._name)
+        todo_type = self.env.ref("mail.mail_activity_data_todo")
+
+        inquiries = self.search([
+            ("followup_date", "<=", today),
+            ("status", "not in", ("won", "lost")),
+        ])
+        for inquiry in inquiries:
+            if inquiry.followup_reminder_sent_on == today:
+                continue
+            summary = _("Follow up on inquiry %s") % inquiry.name
+            existing = self.env["mail.activity"].search_count([
+                ("res_model_id", "=", model_id),
+                ("res_id", "=", inquiry.id),
+                ("summary", "=", summary),
+                ("date_deadline", "=", today),
+                ("user_id", "=", inquiry.agent_id.id or self.env.user.id),
+            ])
+            if not existing:
+                self.env["mail.activity"].create({
+                    "activity_type_id": todo_type.id,
+                    "res_model_id": model_id,
+                    "res_id": inquiry.id,
+                    "user_id": inquiry.agent_id.id or self.env.user.id,
+                    "summary": summary,
+                    "note": _(
+                        "This inquiry requires follow-up with %(customer)s regarding %(property)s."
+                    ) % {
+                        "customer": inquiry.customer_id.display_name,
+                        "property": inquiry.property_id.display_name or _("the requested property"),
+                    },
+                    "date_deadline": today,
+                })
+            inquiry.followup_reminder_sent_on = today
 
 
 class PalmatePropertyReservation(models.Model):
@@ -294,6 +358,14 @@ class PalmatePropertyReservation(models.Model):
         string = "Days to Expiry",
         compute = "_compute_days_to_expiry",
     )
+    expiring_soon = fields.Boolean(
+        string = "Expiring Soon",
+        compute = "_compute_days_to_expiry",
+    )
+    expiry_reminder_sent_on = fields.Date(
+        string = "Expiry Reminder Sent On",
+        copy = False,
+    )
 
     def _compute_days_to_expiry(self):
         today = fields.Date.context_today(self)
@@ -302,6 +374,11 @@ class PalmatePropertyReservation(models.Model):
                 record.days_to_expiry = (record.expiry_date - today).days
             else:
                 record.days_to_expiry = 0
+            record.expiring_soon = bool(
+                record.expiry_date
+                and record.status == "active"
+                and record.days_to_expiry <= 2
+            )
 
     @api.onchange("inquiry_id")
     def _onchange_inquiry_id(self):
@@ -397,6 +474,53 @@ class PalmatePropertyReservation(models.Model):
                 "default_agent_id": self.agent_id.id,
             },
         }
+
+    def action_send_reservation_email(self):
+        template = self.env.ref("palmate_real_estate.mail_template_property_reservation_update")
+        for record in self:
+            if record.customer_id.email:
+                template.send_mail(record.id, force_send=False)
+        return True
+
+    @api.model
+    def _cron_schedule_expiry_activities(self):
+        today = fields.Date.context_today(self)
+        limit_date = today + timedelta(days=2)
+        model_id = self.env["ir.model"]._get_id(self._name)
+        todo_type = self.env.ref("mail.mail_activity_data_todo")
+
+        reservations = self.search([
+            ("status", "=", "active"),
+            ("expiry_date", "!=", False),
+            ("expiry_date", "<=", limit_date),
+        ])
+        for reservation in reservations:
+            if reservation.expiry_reminder_sent_on == today:
+                continue
+            summary = _("Reservation expiring soon: %s") % reservation.name
+            existing = self.env["mail.activity"].search_count([
+                ("res_model_id", "=", model_id),
+                ("res_id", "=", reservation.id),
+                ("summary", "=", summary),
+                ("user_id", "=", reservation.agent_id.id or self.env.user.id),
+            ])
+            if not existing:
+                self.env["mail.activity"].create({
+                    "activity_type_id": todo_type.id,
+                    "res_model_id": model_id,
+                    "res_id": reservation.id,
+                    "user_id": reservation.agent_id.id or self.env.user.id,
+                    "summary": summary,
+                    "note": _(
+                        "Reservation %(reservation)s for %(customer)s expires on %(expiry)s."
+                    ) % {
+                        "reservation": reservation.name,
+                        "customer": reservation.customer_id.display_name,
+                        "expiry": reservation.expiry_date,
+                    },
+                    "date_deadline": reservation.expiry_date,
+                })
+            reservation.expiry_reminder_sent_on = today
 
 
 class PalmatePropertyContract(models.Model):
@@ -626,6 +750,13 @@ class PalmatePropertyContract(models.Model):
     def action_close(self):
         for record in self:
             record.status = "closed"
+
+    def action_send_contract_email(self):
+        template = self.env.ref("palmate_real_estate.mail_template_property_contract_update")
+        for record in self:
+            if record.customer_id.email:
+                template.send_mail(record.id, force_send=False)
+        return True
 
 
 class PalmateContractPayment(models.Model):

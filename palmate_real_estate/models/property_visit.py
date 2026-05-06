@@ -210,3 +210,10 @@ class PalmatePropertyVisit(models.Model):
                 "default_agent_id": self.agent_id.id,
             },
         }
+
+    def action_send_visit_email(self):
+        template = self.env.ref("palmate_real_estate.mail_template_property_visit_update")
+        for record in self:
+            if record.customer_id.email:
+                template.send_mail(record.id, force_send=False)
+        return True

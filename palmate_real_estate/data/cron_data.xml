@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="ir_cron_palmate_inquiry_followup" model="ir.cron">
+        <field name="name">Palmate Inquiry Follow-up Reminders</field>
+        <field name="model_id" ref="model_palmate_property_inquiry"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_schedule_followup_activities()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="ir_cron_palmate_reservation_expiry" model="ir.cron">
+        <field name="name">Palmate Reservation Expiry Reminders</field>
+        <field name="model_id" ref="model_palmate_property_reservation"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_schedule_expiry_activities()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active">True</field>
+    </record>
+
+</odoo>

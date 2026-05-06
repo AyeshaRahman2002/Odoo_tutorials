@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="mail_template_property_inquiry_update" model="mail.template">
+        <field name="name">Property Inquiry Update</field>
+        <field name="model_id" ref="model_palmate_property_inquiry"/>
+        <field name="subject">Update on your inquiry {{ object.name }}</field>
+        <field name="email_to">{{ object.customer_id.email or '' }}</field>
+        <field name="body_html" type="html">
+            <div>
+                <p>Dear <t t-out="object.customer_id.name or 'Customer'"/>,</p>
+                <p>We are following up on your inquiry <strong><t t-out="object.name"/></strong>.</p>
+                <p>
+                    Current status: <strong><t t-out="dict(object._fields['status'].selection).get(object.status)"/></strong><br/>
+                    Property: <strong><t t-out="object.property_id.display_name or 'To be confirmed'"/></strong><br/>
+                    Assigned agent: <strong><t t-out="object.agent_id.name or ''"/></strong>
+                </p>
+                <p>We will be happy to assist you with the next step.</p>
+            </div>
+        </field>
+    </record>
+
+    <record id="mail_template_property_visit_update" model="mail.template">
+        <field name="name">Property Visit Update</field>
+        <field name="model_id" ref="model_palmate_property_visit"/>
+        <field name="subject">Visit update {{ object.name }}</field>
+        <field name="email_to">{{ object.customer_id.email or '' }}</field>
+        <field name="body_html" type="html">
+            <div>
+                <p>Dear <t t-out="object.customer_id.name or 'Customer'"/>,</p>
+                <p>Your property visit <strong><t t-out="object.name"/></strong> has been updated.</p>
+                <p>
+                    Property: <strong><t t-out="object.property_id.display_name or 'To be confirmed'"/></strong><br/>
+                    Visit date: <strong><t t-out="object.visit_date or ''"/></strong><br/>
+                    Status: <strong><t t-out="dict(object._fields['status'].selection).get(object.status)"/></strong>
+                </p>
+                <p>Please contact us if you would like to proceed further.</p>
+            </div>
+        </field>
+    </record>
+
+    <record id="mail_template_property_reservation_update" model="mail.template">
+        <field name="name">Property Reservation Update</field>
+        <field name="model_id" ref="model_palmate_property_reservation"/>
+        <field name="subject">Reservation update {{ object.name }}</field>
+        <field name="email_to">{{ object.customer_id.email or '' }}</field>
+        <field name="body_html" type="html">
+            <div>
+                <p>Dear <t t-out="object.customer_id.name or 'Customer'"/>,</p>
+                <p>Your reservation <strong><t t-out="object.name"/></strong> is now <strong><t t-out="dict(object._fields['status'].selection).get(object.status)"/></strong>.</p>
+                <p>
+                    Property: <strong><t t-out="object.property_id.display_name"/></strong><br/>
+                    Expiry date: <strong><t t-out="object.expiry_date or ''"/></strong><br/>
+                    Deposit amount: <strong><t t-out="object.deposit_amount"/></strong>
+                </p>
+            </div>
+        </field>
+    </record>
+
+    <record id="mail_template_property_contract_update" model="mail.template">
+        <field name="name">Property Contract Update</field>
+        <field name="model_id" ref="model_palmate_property_contract"/>
+        <field name="subject">Contract update {{ object.name }}</field>
+        <field name="email_to">{{ object.customer_id.email or '' }}</field>
+        <field name="body_html" type="html">
+            <div>
+                <p>Dear <t t-out="object.customer_id.name or 'Customer'"/>,</p>
+                <p>Your contract <strong><t t-out="object.name"/></strong> has been updated.</p>
+                <p>
+                    Contract type: <strong><t t-out="dict(object._fields['contract_type'].selection).get(object.contract_type)"/></strong><br/>
+                    Status: <strong><t t-out="dict(object._fields['status'].selection).get(object.status)"/></strong><br/>
+                    Amount: <strong><t t-out="object.amount"/></strong>
+                </p>
+                <p>Our team will stay in touch regarding the next steps.</p>
+            </div>
+        </field>
+    </record>
+
+</odoo>
