@@ -192,7 +192,10 @@
                             <field name = "reservation_ids" context = "{'default_property_id': id}">
                                 <list editable = "bottom">
                                     <field name = "name"/>
+                                    <field name = "inquiry_id"/>
+                                    <field name = "visit_id"/>
                                     <field name = "customer_id"/>
+                                    <field name = "agent_id"/>
                                     <field name = "reservation_date"/>
                                     <field name = "expiry_date"/>
                                     <field name = "deposit_amount"/>
@@ -204,6 +207,9 @@
                             <field name = "contract_ids" context = "{'default_property_id': id}">
                                 <list editable = "bottom">
                                     <field name = "name"/>
+                                    <field name = "inquiry_id"/>
+                                    <field name = "reservation_id"/>
+                                    <field name = "visit_id"/>
                                     <field name = "customer_id"/>
                                     <field name = "agent_id"/>
                                     <field name = "contract_type"/>

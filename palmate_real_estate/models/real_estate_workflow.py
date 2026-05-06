@@ -1,4 +1,5 @@
 from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class PalmatePropertyInquiry(models.Model):
@@ -87,6 +88,16 @@ class PalmatePropertyInquiry(models.Model):
         "inquiry_id",
         string = "Visits",
     )
+    reservation_ids = fields.One2many(
+        "palmate.property.reservation",
+        "inquiry_id",
+        string = "Reservations",
+    )
+    contract_ids = fields.One2many(
+        "palmate.property.contract",
+        "inquiry_id",
+        string = "Contracts",
+    )
     visit_count = fields.Integer(
         string = "Visit Count",
         compute = "_compute_visit_count",
@@ -147,6 +158,22 @@ class PalmatePropertyInquiry(models.Model):
             "context": {"default_inquiry_id": self.id},
         }
 
+    def action_create_reservation(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Create Reservation"),
+            "res_model": "palmate.property.reservation",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_inquiry_id": self.id,
+                "default_property_id": self.property_id.id,
+                "default_customer_id": self.customer_id.id,
+                "default_agent_id": self.agent_id.id,
+            },
+        }
+
 
 class PalmatePropertyReservation(models.Model):
     _name = "palmate.property.reservation"
@@ -204,6 +231,17 @@ class PalmatePropertyReservation(models.Model):
         string = "Inquiry",
         tracking = True,
     )
+    visit_id = fields.Many2one(
+        "palmate.property.visit",
+        string = "Visit",
+        tracking = True,
+    )
+    agent_id = fields.Many2one(
+        "res.users",
+        string = "Agent",
+        default = lambda self: self.env.user,
+        tracking = True,
+    )
     currency_id = fields.Many2one(
         "res.currency",
         string = "Currency",
@@ -218,8 +256,55 @@ class PalmatePropertyReservation(models.Model):
     )
     notes = fields.Text(string = "Notes")
 
+    @api.onchange("inquiry_id")
+    def _onchange_inquiry_id(self):
+        for record in self:
+            if record.inquiry_id:
+                record.property_id = record.inquiry_id.property_id
+                record.customer_id = record.inquiry_id.customer_id
+                record.agent_id = record.inquiry_id.agent_id
+
+    @api.onchange("visit_id")
+    def _onchange_visit_id(self):
+        for record in self:
+            if record.visit_id:
+                record.inquiry_id = record.visit_id.inquiry_id
+                record.property_id = record.visit_id.property_id
+                record.customer_id = record.visit_id.customer_id
+                record.agent_id = record.visit_id.agent_id
+
+    @api.constrains("inquiry_id", "visit_id", "property_id", "customer_id")
+    def _check_reservation_consistency(self):
+        for record in self:
+            if record.inquiry_id:
+                if record.inquiry_id.property_id and record.property_id and record.inquiry_id.property_id != record.property_id:
+                    raise ValidationError(_("The reservation property must match the inquiry property."))
+                if record.customer_id and record.inquiry_id.customer_id != record.customer_id:
+                    raise ValidationError(_("The reservation customer must match the inquiry customer."))
+            if record.visit_id:
+                if record.visit_id.property_id and record.property_id and record.visit_id.property_id != record.property_id:
+                    raise ValidationError(_("The reservation property must match the visit property."))
+                if record.customer_id and record.visit_id.customer_id != record.customer_id:
+                    raise ValidationError(_("The reservation customer must match the visit customer."))
+                if record.inquiry_id and record.visit_id.inquiry_id and record.inquiry_id != record.visit_id.inquiry_id:
+                    raise ValidationError(_("The reservation inquiry must match the linked visit inquiry."))
+
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            visit_id = vals.get("visit_id")
+            inquiry_id = vals.get("inquiry_id")
+            if visit_id:
+                visit = self.env["palmate.property.visit"].browse(visit_id)
+                vals.setdefault("inquiry_id", visit.inquiry_id.id)
+                vals.setdefault("property_id", visit.property_id.id)
+                vals.setdefault("customer_id", visit.customer_id.id)
+                vals.setdefault("agent_id", visit.agent_id.id)
+            elif inquiry_id:
+                inquiry = self.env["palmate.property.inquiry"].browse(inquiry_id)
+                vals.setdefault("property_id", inquiry.property_id.id)
+                vals.setdefault("customer_id", inquiry.customer_id.id)
+                vals.setdefault("agent_id", inquiry.agent_id.id)
         records = super().create(vals_list)
         for record in records:
             record.property_id.status = "reserved"
@@ -245,6 +330,24 @@ class PalmatePropertyReservation(models.Model):
             record.status = "cancelled"
             if record.property_id.status == "reserved":
                 record.property_id.status = "available"
+
+    def action_create_contract(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Create Contract"),
+            "res_model": "palmate.property.contract",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_reservation_id": self.id,
+                "default_visit_id": self.visit_id.id,
+                "default_inquiry_id": self.inquiry_id.id,
+                "default_property_id": self.property_id.id,
+                "default_customer_id": self.customer_id.id,
+                "default_agent_id": self.agent_id.id,
+            },
+        }
 
 
 class PalmatePropertyContract(models.Model):
@@ -319,6 +422,11 @@ class PalmatePropertyContract(models.Model):
         string = "Reservation",
         tracking = True,
     )
+    visit_id = fields.Many2one(
+        "palmate.property.visit",
+        string = "Visit",
+        tracking = True,
+    )
     inquiry_id = fields.Many2one(
         "palmate.property.inquiry",
         string = "Inquiry",
@@ -347,6 +455,84 @@ class PalmatePropertyContract(models.Model):
         string = "Commissions",
     )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            reservation_id = vals.get("reservation_id")
+            visit_id = vals.get("visit_id")
+            inquiry_id = vals.get("inquiry_id")
+            if reservation_id:
+                reservation = self.env["palmate.property.reservation"].browse(reservation_id)
+                vals.setdefault("visit_id", reservation.visit_id.id)
+                vals.setdefault("inquiry_id", reservation.inquiry_id.id)
+                vals.setdefault("property_id", reservation.property_id.id)
+                vals.setdefault("customer_id", reservation.customer_id.id)
+                vals.setdefault("agent_id", reservation.agent_id.id)
+            elif visit_id:
+                visit = self.env["palmate.property.visit"].browse(visit_id)
+                vals.setdefault("inquiry_id", visit.inquiry_id.id)
+                vals.setdefault("property_id", visit.property_id.id)
+                vals.setdefault("customer_id", visit.customer_id.id)
+                vals.setdefault("agent_id", visit.agent_id.id)
+            elif inquiry_id:
+                inquiry = self.env["palmate.property.inquiry"].browse(inquiry_id)
+                vals.setdefault("property_id", inquiry.property_id.id)
+                vals.setdefault("customer_id", inquiry.customer_id.id)
+                vals.setdefault("agent_id", inquiry.agent_id.id)
+        return super().create(vals_list)
+
+    @api.onchange("reservation_id")
+    def _onchange_reservation_id(self):
+        for record in self:
+            if record.reservation_id:
+                record.property_id = record.reservation_id.property_id
+                record.customer_id = record.reservation_id.customer_id
+                record.agent_id = record.reservation_id.agent_id
+                record.inquiry_id = record.reservation_id.inquiry_id
+                record.visit_id = record.reservation_id.visit_id
+
+    @api.onchange("visit_id")
+    def _onchange_visit_id(self):
+        for record in self:
+            if record.visit_id:
+                record.property_id = record.visit_id.property_id
+                record.customer_id = record.visit_id.customer_id
+                record.agent_id = record.visit_id.agent_id
+                record.inquiry_id = record.visit_id.inquiry_id
+
+    @api.onchange("inquiry_id")
+    def _onchange_inquiry_id(self):
+        for record in self:
+            if record.inquiry_id:
+                record.property_id = record.inquiry_id.property_id
+                record.customer_id = record.inquiry_id.customer_id
+                record.agent_id = record.inquiry_id.agent_id
+
+    @api.constrains("reservation_id", "visit_id", "inquiry_id", "property_id", "customer_id")
+    def _check_contract_consistency(self):
+        for record in self:
+            if record.reservation_id:
+                if record.property_id and record.reservation_id.property_id != record.property_id:
+                    raise ValidationError(_("The contract property must match the reservation property."))
+                if record.customer_id and record.reservation_id.customer_id != record.customer_id:
+                    raise ValidationError(_("The contract customer must match the reservation customer."))
+                if record.visit_id and record.reservation_id.visit_id and record.visit_id != record.reservation_id.visit_id:
+                    raise ValidationError(_("The contract visit must match the reservation visit."))
+                if record.inquiry_id and record.reservation_id.inquiry_id and record.inquiry_id != record.reservation_id.inquiry_id:
+                    raise ValidationError(_("The contract inquiry must match the reservation inquiry."))
+            if record.visit_id:
+                if record.property_id and record.visit_id.property_id and record.visit_id.property_id != record.property_id:
+                    raise ValidationError(_("The contract property must match the visit property."))
+                if record.customer_id and record.visit_id.customer_id != record.customer_id:
+                    raise ValidationError(_("The contract customer must match the visit customer."))
+                if record.inquiry_id and record.visit_id.inquiry_id and record.inquiry_id != record.visit_id.inquiry_id:
+                    raise ValidationError(_("The contract inquiry must match the visit inquiry."))
+            if record.inquiry_id:
+                if record.property_id and record.inquiry_id.property_id and record.inquiry_id.property_id != record.property_id:
+                    raise ValidationError(_("The contract property must match the inquiry property."))
+                if record.customer_id and record.inquiry_id.customer_id != record.customer_id:
+                    raise ValidationError(_("The contract customer must match the inquiry customer."))
+
     def action_sign(self):
         for record in self:
             record.status = "signed"
@@ -357,6 +543,8 @@ class PalmatePropertyContract(models.Model):
             record.property_id.status = "sold" if record.contract_type == "sale" else "rented"
             if record.reservation_id:
                 record.reservation_id.status = "converted"
+            if record.inquiry_id:
+                record.inquiry_id.status = "won"
 
     def action_close(self):
         for record in self:

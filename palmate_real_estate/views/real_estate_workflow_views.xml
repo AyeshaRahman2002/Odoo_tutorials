@@ -33,6 +33,8 @@
                             invisible = "status not in ('qualified', 'visit_scheduled', 'offer_sent')"/>
                     <button name = "action_send_offer" string = "Send Offer" type = "object"
                             invisible = "status not in ('qualified', 'visit_scheduled')"/>
+                    <button name = "action_create_reservation" string = "Create Reservation" type = "object"
+                            invisible = "status not in ('visit_scheduled', 'offer_sent')"/>
                     <button name = "action_mark_won" string = "Mark Won" type = "object"
                             invisible = "status == 'won'"/>
                     <button name = "action_mark_lost" string = "Mark Lost" type = "object"
@@ -133,8 +135,11 @@
         <field name = "arch" type = "xml">
             <list string = "Property Reservations">
                 <field name = "name"/>
+                <field name = "inquiry_id"/>
+                <field name = "visit_id"/>
                 <field name = "property_id"/>
                 <field name = "customer_id"/>
+                <field name = "agent_id"/>
                 <field name = "reservation_date"/>
                 <field name = "expiry_date"/>
                 <field name = "deposit_amount"/>
@@ -149,6 +154,8 @@
         <field name = "arch" type = "xml">
             <form string = "Property Reservation">
                 <header>
+                    <button name = "action_create_contract" string = "Create Contract" type = "object"
+                            invisible = "status in ('cancelled', 'expired')"/>
                     <button name = "action_activate" string = "Activate" type = "object"
                             invisible = "status == 'active'"/>
                     <button name = "action_expire" string = "Expire" type = "object"
@@ -167,9 +174,11 @@
                     </div>
                     <group>
                         <group>
+                            <field name = "inquiry_id"/>
+                            <field name = "visit_id"/>
                             <field name = "property_id"/>
                             <field name = "customer_id"/>
-                            <field name = "inquiry_id"/>
+                            <field name = "agent_id"/>
                         </group>
                         <group>
                             <field name = "reservation_date"/>
@@ -199,6 +208,9 @@
         <field name = "arch" type = "xml">
             <list string = "Property Contracts">
                 <field name = "name"/>
+                <field name = "inquiry_id"/>
+                <field name = "reservation_id"/>
+                <field name = "visit_id"/>
                 <field name = "property_id"/>
                 <field name = "customer_id"/>
                 <field name = "agent_id"/>
@@ -249,6 +261,7 @@
 
                     <group>
                         <group>
+                            <field name = "visit_id"/>
                             <field name = "reservation_id"/>
                             <field name = "inquiry_id"/>
                         </group>

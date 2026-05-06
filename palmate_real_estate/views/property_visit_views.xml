@@ -31,6 +31,10 @@
                             string = "Suggest Matching Properties"
                             type = "object"
                             class = "btn-secondary"/>
+                    <button name = "action_create_reservation"
+                            string = "Create Reservation"
+                            type = "object"
+                            invisible = "status not in ('interested', 'offer_sent', 'closed')"/>
                     <button name = "action_complete"
                             string = "Mark Completed"
                             type = "object"

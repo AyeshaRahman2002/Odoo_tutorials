@@ -1,4 +1,5 @@
-from odoo import _, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class PalmatePropertyVisit(models.Model):
@@ -32,6 +33,12 @@ class PalmatePropertyVisit(models.Model):
         "palmate.property.inquiry",
         string = "Inquiry",
         tracking = True,
+    )
+
+    reservation_ids = fields.One2many(
+        "palmate.property.reservation",
+        "visit_id",
+        string = "Reservations",
     )
 
     agent_id = fields.Many2one(
@@ -98,6 +105,42 @@ class PalmatePropertyVisit(models.Model):
         required = True,
     )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            inquiry_id = vals.get("inquiry_id")
+            if inquiry_id:
+                inquiry = self.env["palmate.property.inquiry"].browse(inquiry_id)
+                vals.setdefault("property_id", inquiry.property_id.id)
+                vals.setdefault("customer_id", inquiry.customer_id.id)
+                vals.setdefault("agent_id", inquiry.agent_id.id)
+                vals.setdefault("preferred_location", inquiry.preferred_location)
+                vals.setdefault("preferred_budget", inquiry.budget)
+                vals.setdefault("preferred_property_type", inquiry.property_type)
+        return super().create(vals_list)
+
+    @api.onchange("inquiry_id")
+    def _onchange_inquiry_id(self):
+        for record in self:
+            if record.inquiry_id:
+                record.property_id = record.inquiry_id.property_id
+                record.customer_id = record.inquiry_id.customer_id
+                record.agent_id = record.inquiry_id.agent_id
+                record.preferred_location = record.inquiry_id.preferred_location
+                record.preferred_budget = record.inquiry_id.budget
+                record.preferred_property_type = record.inquiry_id.property_type
+
+    @api.constrains("inquiry_id", "property_id", "customer_id")
+    def _check_inquiry_consistency(self):
+        for record in self:
+            inquiry = record.inquiry_id
+            if not inquiry:
+                continue
+            if inquiry.property_id and record.property_id and inquiry.property_id != record.property_id:
+                raise ValidationError(_("The selected property must match the inquiry property."))
+            if record.customer_id and inquiry.customer_id != record.customer_id:
+                raise ValidationError(_("The visit customer must match the inquiry customer."))
+
     def action_complete(self):
         for record in self:
             record.status = "completed"
@@ -145,6 +188,23 @@ class PalmatePropertyVisit(models.Model):
             "domain": domain,
             "context": {
                 "search_default_available": 1,
+                "default_agent_id": self.agent_id.id,
+            },
+        }
+
+    def action_create_reservation(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Create Reservation"),
+            "res_model": "palmate.property.reservation",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_visit_id": self.id,
+                "default_inquiry_id": self.inquiry_id.id,
+                "default_property_id": self.property_id.id,
+                "default_customer_id": self.customer_id.id,
                 "default_agent_id": self.agent_id.id,
             },
         }
