@@ -11,7 +11,7 @@ class PalmatePropertyInquiry(models.Model):
     name = fields.Char(
         string = "Inquiry Reference",
         required = True,
-        default = "New Inquiry",
+        default = "/",
         tracking = True,
     )
     property_id = fields.Many2one(
@@ -102,30 +102,65 @@ class PalmatePropertyInquiry(models.Model):
         string = "Visit Count",
         compute = "_compute_visit_count",
     )
+    priority = fields.Selection(
+        [
+            ("0", "Low"),
+            ("1", "Medium"),
+            ("2", "High"),
+        ],
+        string = "Priority",
+        default = "1",
+        tracking = True,
+    )
+    followup_date = fields.Date(
+        string = "Next Follow-up",
+        tracking = True,
+    )
+    expected_close_date = fields.Date(
+        string = "Expected Close Date",
+        tracking = True,
+    )
+    probability = fields.Float(
+        string = "Probability %",
+        default = 10.0,
+        tracking = True,
+    )
 
     def _compute_visit_count(self):
         for record in self:
             record.visit_count = len(record.visit_ids)
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("name", "/") == "/":
+                vals["name"] = self.env["ir.sequence"].next_by_code("palmate.property.inquiry") or "/"
+        return super().create(vals_list)
+
     def action_qualify(self):
         for record in self:
             record.status = "qualified"
+            record.probability = max(record.probability, 35.0)
 
     def action_schedule_visit(self):
         for record in self:
             record.status = "visit_scheduled"
+            record.probability = max(record.probability, 50.0)
 
     def action_send_offer(self):
         for record in self:
             record.status = "offer_sent"
+            record.probability = max(record.probability, 75.0)
 
     def action_mark_won(self):
         for record in self:
             record.status = "won"
+            record.probability = 100.0
 
     def action_mark_lost(self):
         for record in self:
             record.status = "lost"
+            record.probability = 0.0
 
     def action_create_visit(self):
         self.ensure_one()
@@ -184,7 +219,7 @@ class PalmatePropertyReservation(models.Model):
     name = fields.Char(
         string = "Reservation Reference",
         required = True,
-        default = "New Reservation",
+        default = "/",
         tracking = True,
     )
     property_id = fields.Many2one(
@@ -255,6 +290,18 @@ class PalmatePropertyReservation(models.Model):
         required = True,
     )
     notes = fields.Text(string = "Notes")
+    days_to_expiry = fields.Integer(
+        string = "Days to Expiry",
+        compute = "_compute_days_to_expiry",
+    )
+
+    def _compute_days_to_expiry(self):
+        today = fields.Date.context_today(self)
+        for record in self:
+            if record.expiry_date:
+                record.days_to_expiry = (record.expiry_date - today).days
+            else:
+                record.days_to_expiry = 0
 
     @api.onchange("inquiry_id")
     def _onchange_inquiry_id(self):
@@ -292,6 +339,8 @@ class PalmatePropertyReservation(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if vals.get("name", "/") == "/":
+                vals["name"] = self.env["ir.sequence"].next_by_code("palmate.property.reservation") or "/"
             visit_id = vals.get("visit_id")
             inquiry_id = vals.get("inquiry_id")
             if visit_id:
@@ -359,7 +408,7 @@ class PalmatePropertyContract(models.Model):
     name = fields.Char(
         string = "Contract Reference",
         required = True,
-        default = "New Contract",
+        default = "/",
         tracking = True,
     )
     property_id = fields.Many2one(
@@ -454,10 +503,38 @@ class PalmatePropertyContract(models.Model):
         "contract_id",
         string = "Commissions",
     )
+    paid_amount = fields.Monetary(
+        string = "Paid Amount",
+        currency_field = "currency_id",
+        compute = "_compute_payment_totals",
+        store = True,
+    )
+    outstanding_amount = fields.Monetary(
+        string = "Outstanding Amount",
+        currency_field = "currency_id",
+        compute = "_compute_payment_totals",
+        store = True,
+    )
+    payment_progress = fields.Float(
+        string = "Payment Progress %",
+        compute = "_compute_payment_totals",
+        store = True,
+    )
+
+    @api.depends("amount", "payment_line_ids.amount", "payment_line_ids.paid")
+    def _compute_payment_totals(self):
+        for record in self:
+            paid_amount = sum(record.payment_line_ids.filtered("paid").mapped("amount"))
+            total_amount = record.amount or sum(record.payment_line_ids.mapped("amount"))
+            record.paid_amount = paid_amount
+            record.outstanding_amount = max(total_amount - paid_amount, 0.0)
+            record.payment_progress = (paid_amount / total_amount * 100.0) if total_amount else 0.0
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if vals.get("name", "/") == "/":
+                vals["name"] = self.env["ir.sequence"].next_by_code("palmate.property.contract") or "/"
             reservation_id = vals.get("reservation_id")
             visit_id = vals.get("visit_id")
             inquiry_id = vals.get("inquiry_id")
@@ -681,7 +758,7 @@ class PalmateMaintenanceRequest(models.Model):
     name = fields.Char(
         string = "Request Reference",
         required = True,
-        default = "New Maintenance Request",
+        default = "/",
         tracking = True,
     )
     property_id = fields.Many2one(
@@ -751,6 +828,22 @@ class PalmateMaintenanceRequest(models.Model):
         required = True,
     )
     description = fields.Text(string = "Description")
+    reported_date = fields.Date(
+        string = "Reported Date",
+        default = fields.Date.context_today,
+        tracking = True,
+    )
+    completion_date = fields.Date(
+        string = "Completion Date",
+        tracking = True,
+    )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("name", "/") == "/":
+                vals["name"] = self.env["ir.sequence"].next_by_code("palmate.maintenance.request") or "/"
+        return super().create(vals_list)
 
     def action_start(self):
         for record in self:
@@ -759,3 +852,4 @@ class PalmateMaintenanceRequest(models.Model):
     def action_done(self):
         for record in self:
             record.status = "done"
+            record.completion_date = fields.Date.context_today(record)

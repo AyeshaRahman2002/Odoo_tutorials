@@ -11,7 +11,7 @@ class PalmatePropertyVisit(models.Model):
     name = fields.Char(
         string = "Visit Reference",
         required = True,
-        default = "New Property Visit",
+        default = "/",
         tracking = True,
     )
 
@@ -108,6 +108,8 @@ class PalmatePropertyVisit(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if vals.get("name", "/") == "/":
+                vals["name"] = self.env["ir.sequence"].next_by_code("palmate.property.visit") or "/"
             inquiry_id = vals.get("inquiry_id")
             if inquiry_id:
                 inquiry = self.env["palmate.property.inquiry"].browse(inquiry_id)

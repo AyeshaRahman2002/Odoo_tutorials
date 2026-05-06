@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="seq_palmate_property_inquiry" model="ir.sequence">
+        <field name="name">Property Inquiry</field>
+        <field name="code">palmate.property.inquiry</field>
+        <field name="prefix">INQ%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_palmate_property_visit" model="ir.sequence">
+        <field name="name">Property Visit</field>
+        <field name="code">palmate.property.visit</field>
+        <field name="prefix">VIS%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_palmate_property_reservation" model="ir.sequence">
+        <field name="name">Property Reservation</field>
+        <field name="code">palmate.property.reservation</field>
+        <field name="prefix">RES%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_palmate_property_contract" model="ir.sequence">
+        <field name="name">Property Contract</field>
+        <field name="code">palmate.property.contract</field>
+        <field name="prefix">CON%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_palmate_maintenance_request" model="ir.sequence">
+        <field name="name">Maintenance Request</field>
+        <field name="code">palmate.maintenance.request</field>
+        <field name="prefix">MNT%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+</odoo>

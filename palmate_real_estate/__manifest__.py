@@ -19,6 +19,7 @@ This module manages:
     "depends": ["base", "mail"],
     "data": [
         "security/ir.model.access.csv",
+        "data/sequence_data.xml",
         "views/property_views.xml",
         "views/property_visit_views.xml",
         "views/real_estate_workflow_views.xml",
