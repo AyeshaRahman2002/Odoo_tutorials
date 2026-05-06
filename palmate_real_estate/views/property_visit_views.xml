@@ -1,0 +1,111 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<odoo>
+
+    <record id = "view_palmate_property_visit_tree" model = "ir.ui.view">
+        <field name = "name">palmate.property.visit.tree</field>
+        <field name = "model">palmate.property.visit</field>
+        <field name = "arch" type = "xml">
+            <tree string = "Property Visits">
+                <field name = "name"/>
+                <field name = "property_id"/>
+                <field name = "customer_id"/>
+                <field name = "agent_id"/>
+                <field name = "visit_date"/>
+                <field name = "status"/>
+                <field name = "company_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id = "view_palmate_property_visit_form" model = "ir.ui.view">
+        <field name = "name">palmate.property.visit.form</field>
+        <field name = "model">palmate.property.visit</field>
+        <field name = "arch" type = "xml">
+            <form string = "Property Visit">
+                <header>
+                    <button name = "action_complete"
+                            string = "Mark Completed"
+                            type = "object"
+                            class = "btn-primary"
+                            invisible = "status !=  'scheduled'"/>
+                    <button name = "action_cancel"
+                            string = "Cancel"
+                            type = "object"
+                            invisible = "status == 'cancelled'"/>
+                    <button name = "action_reset_to_scheduled"
+                            string = "Reset to Scheduled"
+                            type = "object"
+                            invisible = "status == 'scheduled'"/>
+                    <field name = "status" widget = "statusbar"
+                           statusbar_visible = "scheduled,completed,cancelled"/>
+                </header>
+
+                <sheet>
+                    <div class = "oe_title">
+                        <h1>
+                            <field name = "name"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name = "property_id"/>
+                            <field name = "customer_id"/>
+                            <field name = "agent_id"/>
+                        </group>
+                        <group>
+                            <field name = "visit_date"/>
+                            <field name = "company_id"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name = "feedback"/>
+                    </group>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id = "view_palmate_property_visit_search" model = "ir.ui.view">
+        <field name = "name">palmate.property.visit.search</field>
+        <field name = "model">palmate.property.visit</field>
+        <field name = "arch" type = "xml">
+            <search string = "Search Property Visits">
+                <field name = "name"/>
+                <field name = "property_id"/>
+                <field name = "customer_id"/>
+                <field name = "agent_id"/>
+                <filter name = "scheduled" string = "Scheduled"
+                        domain = "[('status', ' = ', 'scheduled')]"/>
+                <filter name = "completed" string = "Completed"
+                        domain = "[('status', ' = ', 'completed')]"/>
+                <filter name = "cancelled" string = "Cancelled"
+                        domain = "[('status', ' = ', 'cancelled')]"/>
+                <group expand = "0" string = "Group By">
+                    <filter name = "group_by_status" string = "Status"
+                            context = "{'group_by': 'status'}"/>
+                    <filter name = "group_by_agent" string = "Agent"
+                            context = "{'group_by': 'agent_id'}"/>
+                    <filter name = "group_by_property" string = "Property"
+                            context = "{'group_by': 'property_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id = "action_palmate_property_visit" model = "ir.actions.act_window">
+        <field name = "name">Property Visits</field>
+        <field name = "res_model">palmate.property.visit</field>
+        <field name = "view_mode">tree,form</field>
+    </record>
+
+    <menuitem id = "menu_palmate_property_visit"
+              name = "Property Visits"
+              parent = "menu_palmate_real_estate_root"
+              action = "action_palmate_property_visit"
+              sequence = "20"/>
+
+</odoo>
