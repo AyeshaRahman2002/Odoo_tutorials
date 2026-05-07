@@ -12,7 +12,9 @@
                 <field name = "customer_id"/>
                 <field name = "agent_id"/>
                 <field name = "visit_date"/>
+                <field name = "visit_duration_hours" optional = "hide"/>
                 <field name = "status"/>
+                <field name = "calendar_event_id" optional = "hide"/>
                 <field name = "preferred_location" optional = "hide"/>
                 <field name = "preferred_budget" optional = "hide"/>
                 <field name = "preferred_property_type" optional = "hide"/>
@@ -27,6 +29,16 @@
         <field name = "arch" type = "xml">
             <form string = "Property Visit">
                 <header>
+                    <button name = "action_create_calendar_event"
+                            string = "Schedule In Calendar"
+                            type = "object"
+                            class = "btn-secondary"
+                            invisible = "calendar_event_id"/>
+                    <button name = "action_view_calendar_event"
+                            string = "Open Calendar Event"
+                            type = "object"
+                            class = "btn-secondary"
+                            invisible = "not calendar_event_id"/>
                     <button name = "action_send_visit_email"
                             string = "Send Visit Email"
                             type = "object"
@@ -69,11 +81,19 @@
                             type = "object"
                             invisible = "status == 'scheduled'"/>
                     <field name = "status" widget = "statusbar"
+                           options = "{'clickable': 0}"
                            statusbar_visible = "scheduled,completed,interested,offer_sent,closed,lost,cancelled"/>
                 </header>
 
                 <sheet>
                     <div class = "oe_button_box" name = "button_box">
+                        <button name = "action_view_calendar_event"
+                                type = "object"
+                                class = "oe_stat_button"
+                                icon = "fa-calendar"
+                                invisible = "not calendar_event_id">
+                            <span class = "o_stat_text">Calendar Event</span>
+                        </button>
                         <button name = "action_create_reservation"
                                 type = "object"
                                 class = "oe_stat_button"
@@ -94,9 +114,11 @@
                             <field name = "property_id"/>
                             <field name = "customer_id"/>
                             <field name = "agent_id"/>
+                            <field name = "calendar_event_id" readonly = "1"/>
                         </group>
                         <group>
                             <field name = "visit_date"/>
+                            <field name = "visit_duration_hours"/>
                             <field name = "currency_id"/>
                             <field name = "company_id"/>
                         </group>
@@ -171,7 +193,20 @@
     <record id = "action_palmate_property_visit" model = "ir.actions.act_window">
         <field name = "name">Property Visits</field>
         <field name = "res_model">palmate.property.visit</field>
-        <field name = "view_mode">list,form,pivot,graph</field>
+        <field name = "view_mode">list,calendar,form,pivot,graph</field>
+    </record>
+
+    <record id="view_palmate_property_visit_calendar" model="ir.ui.view">
+        <field name="name">palmate.property.visit.calendar</field>
+        <field name="model">palmate.property.visit</field>
+        <field name="arch" type="xml">
+            <calendar string="Visit Calendar" date_start="visit_date" color="agent_id" mode="month">
+                <field name="name"/>
+                <field name="property_id"/>
+                <field name="customer_id"/>
+                <field name="status"/>
+            </calendar>
+        </field>
     </record>
 
     <record id = "action_palmate_property_visit_reporting" model = "ir.actions.act_window">

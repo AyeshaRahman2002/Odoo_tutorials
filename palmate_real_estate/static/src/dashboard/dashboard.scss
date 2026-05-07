@@ -1,0 +1,182 @@
+.o_palmate_dashboard {
+    padding: 24px;
+    background:
+        linear-gradient(180deg, rgba(224, 231, 255, 0.55) 0%, rgba(255, 255, 255, 0.95) 220px),
+        linear-gradient(120deg, #f6f8fc 0%, #eef3f8 100%);
+    min-height: 100%;
+}
+
+.o_palmate_dashboard_header {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.o_palmate_dashboard_header h1 {
+    margin: 0 0 6px;
+    font-size: 30px;
+    font-weight: 700;
+    color: #183153;
+}
+
+.o_palmate_dashboard_header p {
+    margin: 0;
+    color: #52637a;
+}
+
+.o_palmate_dashboard_actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.o_palmate_dashboard_toggle {
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(140, 152, 164, 0.18);
+    border-radius: 999px;
+    padding: 8px 14px;
+    color: #31445e;
+}
+
+.o_palmate_dashboard_filter_note {
+    margin-bottom: 16px;
+    color: #5f7086;
+    font-size: 14px;
+}
+
+.o_palmate_dashboard_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.o_palmate_dashboard_summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.o_palmate_summary_card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(140, 152, 164, 0.18);
+    border-radius: 18px;
+    padding: 18px 20px;
+    box-shadow: 0 10px 24px rgba(31, 45, 61, 0.06);
+}
+
+.o_palmate_summary_label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5b6b80;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.o_palmate_summary_value {
+    margin-top: 8px;
+    font-size: 28px;
+    font-weight: 700;
+    color: #183153;
+}
+
+.o_palmate_summary_hint {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #607087;
+}
+
+.o_palmate_dashboard_section + .o_palmate_dashboard_section {
+    margin-top: 24px;
+}
+
+.o_palmate_section_header {
+    margin-bottom: 14px;
+}
+
+.o_palmate_section_header h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    color: #183153;
+}
+
+.o_palmate_section_header p {
+    margin: 0;
+    color: #607087;
+}
+
+.o_palmate_dashboard_card {
+    text-align: left;
+    border: 0;
+    border-radius: 20px;
+    padding: 20px;
+    color: #fff;
+    box-shadow: 0 14px 30px rgba(31, 45, 61, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.o_palmate_dashboard_card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 34px rgba(31, 45, 61, 0.14);
+}
+
+.o_palmate_card_title {
+    font-size: 14px;
+    opacity: 0.88;
+}
+
+.o_palmate_card_value {
+    margin-top: 8px;
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.o_palmate_card_subtitle {
+    margin-top: 8px;
+    font-size: 13px;
+    opacity: 0.88;
+}
+
+.o_palmate_card_link {
+    margin-top: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    opacity: 0.96;
+}
+
+.o_palmate_tone_primary { background: linear-gradient(135deg, #1d4ed8, #3b82f6); }
+.o_palmate_tone_secondary { background: linear-gradient(135deg, #0f766e, #14b8a6); }
+.o_palmate_tone_accent { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+.o_palmate_tone_neutral { background: linear-gradient(135deg, #475569, #64748b); }
+.o_palmate_tone_success { background: linear-gradient(135deg, #166534, #22c55e); }
+.o_palmate_tone_warning { background: linear-gradient(135deg, #b45309, #f59e0b); }
+.o_palmate_tone_danger { background: linear-gradient(135deg, #b91c1c, #ef4444); }
+.o_palmate_tone_dark { background: linear-gradient(135deg, #1f2937, #111827); }
+
+.o_palmate_dashboard_loading {
+    margin: 0;
+    color: #52637a;
+}
+
+.o_palmate_dashboard_error {
+    margin-top: 8px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #fff1f2;
+    color: #9f1239;
+    border: 1px solid #fecdd3;
+}
+
+@media (max-width: 768px) {
+    .o_palmate_dashboard {
+        padding: 16px;
+    }
+
+    .o_palmate_dashboard_header {
+        flex-direction: column;
+    }
+}

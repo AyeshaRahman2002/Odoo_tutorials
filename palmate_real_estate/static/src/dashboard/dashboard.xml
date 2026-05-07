@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+
+    <t t-name="palmate_real_estate.Dashboard">
+        <div class="o_palmate_dashboard">
+            <div class="o_palmate_dashboard_header">
+                <div>
+                    <h1>Palmate Real Estate Dashboard</h1>
+                    <p>
+                        Live operational snapshot for
+                        <strong><t t-out="state.monthLabel"/></strong>
+                    </p>
+                </div>
+                <div class="o_palmate_dashboard_actions">
+                    <button class="btn btn-primary" data-quick-action="pipeline" t-on-click="openQuickAction">Open Pipeline</button>
+                    <Dropdown>
+                        <button class="btn btn-outline-secondary">
+                            Open Views
+                            <i class="fa fa-chevron-down ms-2"/>
+                        </button>
+                        <t t-set-slot="content">
+                            <DropdownItem onSelected="() => this.setSectionFilter('all')">Show All Sections</DropdownItem>
+                            <DropdownItem onSelected="() => this.setSectionFilter('pipeline')">Show Pipeline Only</DropdownItem>
+                            <DropdownItem onSelected="() => this.setSectionFilter('operations')">Show Operations Only</DropdownItem>
+                            <div role="separator" class="dropdown-divider"/>
+                            <DropdownItem onSelected="() => this.doQuickAction('visits')">Upcoming Visits</DropdownItem>
+                            <DropdownItem onSelected="() => this.doQuickAction('payments')">Payment Queue</DropdownItem>
+                            <DropdownItem onSelected="() => this.doQuickAction('maintenance')">Maintenance Queue</DropdownItem>
+                        </t>
+                    </Dropdown>
+                    <CheckBox value="state.actionableOnly" className="'o_palmate_dashboard_toggle'" onChange.bind="toggleActionableOnly">
+                        Action-needed metrics only
+                    </CheckBox>
+                </div>
+            </div>
+
+            <t t-if="state.loading">
+                <div class="o_palmate_dashboard_loading">Loading dashboard...</div>
+            </t>
+            <t t-elif="state.error">
+                <div class="o_palmate_dashboard_error">
+                    The dashboard could not be loaded. Refresh the page or upgrade the module again if the issue continues.
+                </div>
+            </t>
+            <t t-else="">
+                <div class="o_palmate_dashboard_summary">
+                    <t t-foreach="state.summary" t-as="item" t-key="item.label">
+                        <div class="o_palmate_summary_card">
+                            <div class="o_palmate_summary_label"><t t-out="item.label"/></div>
+                            <div class="o_palmate_summary_value"><t t-out="item.value"/></div>
+                            <div class="o_palmate_summary_hint"><t t-out="item.hint"/></div>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="o_palmate_dashboard_filter_note">
+                    Viewing:
+                    <strong><t t-out="currentSectionLabel"/></strong>
+                </div>
+
+                <t t-foreach="visibleSections" t-as="section" t-key="section.id">
+                    <section class="o_palmate_dashboard_section">
+                        <div class="o_palmate_section_header">
+                            <div>
+                                <h2><t t-out="section.title"/></h2>
+                                <p><t t-out="section.description"/></p>
+                            </div>
+                        </div>
+
+                        <div class="o_palmate_dashboard_grid">
+                            <t t-foreach="section.cards" t-as="card" t-key="card.id">
+                                <button t-attf-class="o_palmate_dashboard_card o_palmate_tone_#{card.tone}"
+                                        t-att-data-card-id="card.id"
+                                        t-on-click="openCard"
+                                        type="button">
+                                    <div class="o_palmate_card_title"><t t-out="card.title"/></div>
+                                    <div class="o_palmate_card_value"><t t-out="card.value"/></div>
+                                    <t t-if="card.subtitle">
+                                        <div class="o_palmate_card_subtitle"><t t-out="card.subtitle"/></div>
+                                    </t>
+                                    <div class="o_palmate_card_link">Open filtered records</div>
+                                </button>
+                            </t>
+                        </div>
+                    </section>
+                </t>
+            </t>
+        </div>
+    </t>
+
+</templates>

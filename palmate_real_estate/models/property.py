@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 
 
 class PalmateProperty(models.Model):
@@ -159,6 +159,11 @@ class PalmateProperty(models.Model):
         compute = "_compute_related_counts",
     )
 
+    active_reservation_count = fields.Integer(
+        string = "Open Reservation Count",
+        compute = "_compute_related_counts",
+    )
+
     contract_count = fields.Integer(
         string = "Contract Count",
         compute = "_compute_related_counts",
@@ -177,6 +182,9 @@ class PalmateProperty(models.Model):
         for record in self:
             record.inquiry_count = len(record.inquiry_ids)
             record.reservation_count = len(record.reservation_ids)
+            record.active_reservation_count = len(
+                record.reservation_ids.filtered(lambda reservation: reservation.status in ("active", "converted"))
+            )
             record.contract_count = len(record.contract_ids)
             record.maintenance_count = len(record.maintenance_request_ids)
 
@@ -185,20 +193,86 @@ class PalmateProperty(models.Model):
             record.status = "available"
 
     def action_reserve_property(self):
-        for record in self:
-            record.status = "reserved"
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Create Reservation"),
+            "res_model": "palmate.property.reservation",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_property_id": self.id,
+                "default_agent_id": self.agent_id.id,
+            },
+        }
 
     def action_mark_sold(self):
-        for record in self:
-            record.status = "sold"
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Create Sale Contract"),
+            "res_model": "palmate.property.contract",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_property_id": self.id,
+                "default_agent_id": self.agent_id.id,
+                "default_contract_type": "sale",
+            },
+        }
 
     def action_mark_rented(self):
-        for record in self:
-            record.status = "rented"
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Create Rental Contract"),
+            "res_model": "palmate.property.contract",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_property_id": self.id,
+                "default_agent_id": self.agent_id.id,
+                "default_contract_type": "rent",
+            },
+        }
 
     def action_archive_property(self):
         for record in self:
             record.status = "archived"
+
+    def _sync_status_from_pipeline(self):
+        for record in self:
+            if record.status == "archived":
+                continue
+
+            active_or_closed_contracts = record.contract_ids.filtered(lambda contract: contract.status in ("active", "closed"))
+            signed_contracts = record.contract_ids.filtered(lambda contract: contract.status == "signed")
+            open_reservations = record.reservation_ids.filtered(lambda reservation: reservation.status in ("active", "converted"))
+            new_status = record.status
+
+            if active_or_closed_contracts:
+                contract = active_or_closed_contracts.sorted(
+                    key = lambda item: (item.start_date or fields.Date.today(), item.id)
+                )[-1]
+                new_status = "sold" if contract.contract_type == "sale" else "rented"
+            elif signed_contracts or open_reservations:
+                new_status = "reserved"
+            elif record.status in ("reserved", "sold", "rented"):
+                new_status = "available"
+
+            if new_status != record.status:
+                super(PalmateProperty, record).write({"status": new_status})
+
+    @api.model
+    def _sync_all_property_statuses(self):
+        self.search([])._sync_status_from_pipeline()
+        return True
+
+    def write(self, vals):
+        result = super().write(vals)
+        if "status" in vals and not self.env.context.get("skip_property_pipeline_sync"):
+            self._sync_status_from_pipeline()
+        return result
 
     def action_generate_ai_description(self):
         type_labels = dict(self._fields["property_type"].selection)

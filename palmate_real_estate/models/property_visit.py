@@ -1,4 +1,6 @@
-from odoo import _, api, fields, models
+from datetime import timedelta
+
+from odoo import _, Command, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -41,6 +43,13 @@ class PalmatePropertyVisit(models.Model):
         string = "Reservations",
     )
 
+    calendar_event_id = fields.Many2one(
+        "calendar.event",
+        string = "Calendar Event",
+        copy = False,
+        tracking = True,
+    )
+
     agent_id = fields.Many2one(
         "res.users",
         string = "Agent",
@@ -51,6 +60,11 @@ class PalmatePropertyVisit(models.Model):
     visit_date = fields.Datetime(
         string = "Visit Date",
         required = True,
+        tracking = True,
+    )
+    visit_duration_hours = fields.Float(
+        string = "Visit Duration (Hours)",
+        default = 1.0,
         tracking = True,
     )
 
@@ -132,6 +146,27 @@ class PalmatePropertyVisit(models.Model):
                 record.preferred_budget = record.inquiry_id.budget
                 record.preferred_property_type = record.inquiry_id.property_type
 
+    @api.constrains("visit_date", "visit_duration_hours", "agent_id", "status")
+    def _check_agent_schedule_conflicts(self):
+        for record in self:
+            if not record.visit_date or not record.agent_id or record.status == "cancelled":
+                continue
+            visit_end = record.visit_date + timedelta(hours=record.visit_duration_hours or 1.0)
+            overlapping = self.search([
+                ("id", "!=", record.id),
+                ("agent_id", "=", record.agent_id.id),
+                ("status", "!=", "cancelled"),
+                ("visit_date", "<", visit_end),
+            ])
+            overlapping = overlapping.filtered(
+                lambda other: other.visit_date
+                and other.visit_date + timedelta(hours=other.visit_duration_hours or 1.0) > record.visit_date
+            )
+            if overlapping:
+                raise ValidationError(
+                    _("This agent already has another visit scheduled that overlaps with this timeslot.")
+                )
+
     @api.constrains("inquiry_id", "property_id", "customer_id")
     def _check_inquiry_consistency(self):
         for record in self:
@@ -210,6 +245,60 @@ class PalmatePropertyVisit(models.Model):
                 "default_agent_id": self.agent_id.id,
             },
         }
+
+    def _prepare_calendar_event_vals(self):
+        self.ensure_one()
+        partner_ids = self.customer_id | self.agent_id.partner_id
+        start = self.visit_date or fields.Datetime.now()
+        return {
+            "name": _("%s - Property Visit") % self.name,
+            "start": start,
+            "stop": start + timedelta(hours=self.visit_duration_hours or 1.0),
+            "user_id": self.agent_id.id or self.env.user.id,
+            "partner_ids": [Command.set(partner_ids.ids)],
+            "location": self.property_id.location or self.preferred_location or "",
+            "description": self.feedback or "",
+            "res_model_id": self.env["ir.model"]._get_id(self._name),
+            "res_id": self.id,
+        }
+
+    def action_create_calendar_event(self):
+        self.ensure_one()
+        if self.calendar_event_id:
+            return self.action_view_calendar_event()
+        event = self.env["calendar.event"].create(self._prepare_calendar_event_vals())
+        self.calendar_event_id = event.id
+        return self.action_view_calendar_event()
+
+    def action_view_calendar_event(self):
+        self.ensure_one()
+        if not self.calendar_event_id:
+            return self.action_create_calendar_event()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Visit Calendar Event"),
+            "res_model": "calendar.event",
+            "res_id": self.calendar_event_id.id,
+            "view_mode": "form",
+            "target": "current",
+        }
+
+    def write(self, vals):
+        result = super().write(vals)
+        tracked_fields = {
+            "name",
+            "visit_date",
+            "agent_id",
+            "customer_id",
+            "property_id",
+            "preferred_location",
+            "feedback",
+            "visit_duration_hours",
+        }
+        if tracked_fields.intersection(vals):
+            for record in self.filtered("calendar_event_id"):
+                record.calendar_event_id.write(record._prepare_calendar_event_vals())
+        return result
 
     def action_send_visit_email(self):
         template = self.env.ref("palmate_real_estate.mail_template_property_visit_update")
